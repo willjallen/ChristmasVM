@@ -9,10 +9,11 @@
 */
 
 /**
- * This is a toy VM to emulate an 16 bit machine. It has
- *
- * :IDEA: Santa VS the grinch. Basically simplified corewars in christmas flavor
- *
+ * This is a toy VM to emulate a 16 bit machine. It is equipped to compile cmas-lang (.cmas) to CVM bytecode (.cbc) and running that. 
+ * 
+ * (+) Denotes implemented
+ * 
+ * VM MODEL:
  * Registers:
  * REG_A
  * REG_B
@@ -20,43 +21,36 @@
  * REG_PC
  * REG_ACCUM
  *
- * Types:
- * PLACE
+ * Memory:
+ * MEMORY[addr]
+ *
+ * CMAS LANGUAGE:
+ *
+ * Types (they're all uint16_t under the hood):
  * POINTER
  * BOOL
  * INT
  * UINT
  *
- * Operations:
- * AddressOf
- * Load 
- * Store
- * Jump
- * JumpC
- * Add/Subtract/Multiply/Divide
+ * Functions:
+ * LABEL()
+ * VAR(TYPE, NAME)
+ * ADDRESSOF(NAME)
+ * LOAD(ADDR) 
+ * STORE(NAME, ADDR)
+ * JUMP(ADDR)
+ * JUMPC(COND, ADDR)
  *
+ * Unary Operations:
  *
-	<program> ::= <statement> | <statement> <program>
-
-	<statement> ::= <operation> | <operation> <argument> | <operation> <argument> <argument>
-
-	<operation> ::= "AddressOf" | "Load" | "Store" | "Jump" | "JumpC" | "Add" | "Subtract" | "Multiply" | "Divide"
-
-	<argument> ::= <register> | <type>
-
-	<register> ::= "REG_A" | "REG_B" | "REG_PC"
-
-	<type> ::= <place> | <pointer> | <bool> | <int> | <uint>
-
-	<place> ::= "PLACE(" <number> ")"
-	<pointer> ::= "POINTER(" <number> ")"
-	<bool> ::= "TRUE" | "FALSE"
-	<int> ::= <signed_number>
-	<uint> ::= <number>
-
-	<number> ::= <digit> | <digit> <number>
-	<signed_number> ::= <number> | "-" <number>
-	<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+ * Binary Operations
+ * =
+ * +
+ * -
+ * /
+ * * 
+ * >>
+ * <<
  *
  */
 
@@ -91,12 +85,12 @@ int main(int argc, char** argv){
             // Extract the file extension
             std::string extension = programPath.extension().string();
 
-            // Check for .xmas extension
-            if (extension == ".xmas") {
+            // Check for .cmas extension
+            if (extension == ".cmas") {
             	compile = true;
 			}
-            // Check for .cvmbc extension
-            else if (extension == ".cvmbc") {
+            // Check for .cbc extension
+            else if (extension == ".cbc") {
             	execute = true;
 			}
             else {
