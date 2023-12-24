@@ -10,6 +10,8 @@ std::vector<Token> Lexer::tokenize(){
 		
 	while(!fileStream.eof()){
 
+	
+
 	}
 	return std::vector<Token>();
 }
