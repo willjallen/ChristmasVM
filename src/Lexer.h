@@ -1,3 +1,6 @@
+#include <filesystem>
+#include <fstream>
+
 enum TokenType {
 	PLACE,
 	POINTER,
@@ -24,10 +27,10 @@ struct Token {
 
 class Lexer{
 	public:
-		Lexer(std::string file) : file(file) {}
-		int parse();
+		Lexer(std::filesystem::path filePath) : filePath(filePath) {}
+		std::vector<Token> tokenize();
 
 	private:
-		std::string file;
+		std::filesystem::path filePath;
 
 };

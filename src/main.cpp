@@ -62,22 +62,53 @@
 
 
 #include <iostream>
+#include <filesystem>
+
+#include "spdlog/spdlog.h"
 
 #include "CVM.h"
-
+#include "Lexer.h"
 
 
 
 int main(int argc, char** argv){
 	/* Default 8 MB of memory */
 	size_t MEMORY_SIZE_MB = 8; 
+	std::filesystem::path programPath;
+
+	bool compile = false;
+	bool execute = false;
 
 	/* Parse arguments */
-	if(argc < 1){
+	if(argc == 1){
 		std::cout << "Usage: CVM [program_file] <memory (MB)>" << std::endl;
-	}else if(argc == 1){
-	}
-	
+		return 1;
+	}else if(argc == 2){
+		programPath = std::filesystem::path(argv[1]);
+		
+		// Check if the file exists and is not a directory
+		if (std::filesystem::exists(programPath) && !std::filesystem::is_directory(programPath)) {
+            // Extract the file extension
+            std::string extension = programPath.extension().string();
+
+            // Check for .xmas extension
+            if (extension == ".xmas") {
+            	compile = true;
+			}
+            // Check for .cvmbc extension
+            else if (extension == ".cvmbc") {
+            	execute = true;
+			}
+            else {
+                std::cout << "Unsupported file extension." << std::endl;
+            }
+        } else {
+            std::cout << "Invalid file path or directory provided." << std::endl;
+            return 1;
+        }
+    }
+
+
 	std::cout << std::endl;                         
 	std::cout << std::endl;                         
 	std::cout << " ██████╗██╗   ██╗███╗   ███╗" << std::endl;
@@ -95,9 +126,19 @@ int main(int argc, char** argv){
 
 	size_t MEMORY_SIZE =  MEMORY_SIZE_MB * 1024 * 1024 / sizeof(uint16_t);
 	
-	/** Initialize the VM */
-	CVM cvm = CVM(MEMORY_SIZE);
-	cvm.init();	
+
+	if(compile){
+		spdlog::info("Compiling file: " + programPath.filename().string());	
+		Lexer lexer = Lexer(programPath);
+		lexer.tokenize();	
+	}
+
+	if(execute){
+		/** Initialize the VM */
+		CVM cvm = CVM(MEMORY_SIZE);
+		cvm.init();	
+	}
+
 
 }
 

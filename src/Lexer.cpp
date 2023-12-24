@@ -1,12 +1,16 @@
 #include <regex>
 
+#include <fstream>
 #include "Lexer.h"
 
-int Lexer::parse(){
-	/* while(!file.eof()){ */
-	
-	
-	/* } */
-	return 1;
+std::vector<Token> Lexer::tokenize(){
+	std::fstream fileStream(filePath.native(), std::fstream::in);
+
+	/* fileStream.open(); */
+		
+	while(!fileStream.eof()){
+
+	}
+	return std::vector<Token>();
 }
 
