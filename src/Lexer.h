@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <fstream>
 
-enum TokenType {
+enum TOKEN_TYPE {
 	PLACE,
 	POINTER,
 	BOOL,
@@ -22,7 +22,7 @@ enum TokenType {
 struct Token {
 	size_t lineNumber;
 	size_t charNumber;
-	TokenType tokenType;
+	TOKEN_TYPE tokenType;
 };
 
 class Lexer{

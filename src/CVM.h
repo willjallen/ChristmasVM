@@ -1,10 +1,13 @@
 
 
 #include <memory>
+#include "ResultCode.h"
+
 class CVM{
 	public:
 		CVM(size_t MEMORY_SIZE);
-		int init();
+		RESULT init();
+		RESULT run(const std::vector<uint16_t>& bytecode);
 	private:
 		size_t MEMORY_SIZE;
 

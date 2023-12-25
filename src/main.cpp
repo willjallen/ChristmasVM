@@ -33,15 +33,18 @@
  * UINT
  *
  * Functions:
- * LABEL()
- * VAR(TYPE, NAME)
- * ADDRESSOF(NAME)
- * LOAD(ADDR) 
+ * LABEL() -> POINTER
+ * VAR(TYPE, NAME) -> POINTER
+ * ADDRESSOF(NAME) -> POINTER
+ * LOAD(ADDR) -> POINTER | BOOL | INT | UINT
  * STORE(NAME, ADDR)
  * JUMP(ADDR)
  * JUMPC(COND, ADDR)
  *
  * Unary Operations:
+ * !
+ * ++
+ * -- 
  *
  * Binary Operations
  * =
@@ -62,10 +65,11 @@
 
 #include "CVM.h"
 #include "Lexer.h"
+#include "ResultCode.h"
 
 
 
-int main(int argc, char** argv){
+RESULT run(int argc, char** argv){
 	/* Default 8 MB of memory */
 	size_t MEMORY_SIZE_MB = 8; 
 	std::filesystem::path programPath;
@@ -76,7 +80,7 @@ int main(int argc, char** argv){
 	/* Parse arguments */
 	if(argc == 1){
 		std::cout << "Usage: CVM [program_file] <memory (MB)>" << std::endl;
-		return 1;
+		return RESULT_CODE::CLI_ERROR;
 	}else if(argc == 2){
 		programPath = std::filesystem::path(argv[1]);
 		
@@ -95,10 +99,11 @@ int main(int argc, char** argv){
 			}
             else {
                 std::cout << "Unsupported file extension." << std::endl;
+				return RESULT_CODE::CLI_ERROR;
             }
         } else {
             std::cout << "Invalid file path or directory provided." << std::endl;
-            return 1;
+            return RESULT_CODE::CLI_ERROR;
         }
     }
 
@@ -133,8 +138,20 @@ int main(int argc, char** argv){
 		cvm.init();	
 	}
 
-
+	return RESULT_CODE::SUCCESS;
 }
 
 
+int main(int argc, char** argv){
+	RESULT result = run(argc, argv);
+	if(result.value == 1){
+		return 0;
+	}else if(result.name != "CLI_ERROR"){
+		spdlog::error("Error: " + result.name);
+		return 0;
+	}else{
+		// Don't print an error message on a CLI failure
+		return 0;
+	}
+}
 

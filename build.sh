@@ -19,5 +19,5 @@ else
         cmake ..
     fi
     make
-    ./ChristmasVM ../demo.xmas
+    ./ChristmasVM ../demo.cmas
 fi
