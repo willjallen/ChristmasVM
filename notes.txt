@@ -1,0 +1,50 @@
+The specification is as follows:
+
+VM MODEL:
+Registers:
+REG\_A
+REG\_B
+REG\_C
+REG\_PC
+REG\_ACCUM
+
+Memory:
+MEMORY[addr]
+
+CMAS LANGUAGE:
+
+Types (they're all uint16\_t under the hood):
+POINTER
+BOOL
+INT
+UINT
+
+Functions:
+LABEL() -> POINTER
+VAR(TYPE, NAME) -> POINTER
+ADDRESSOF(NAME) -> POINTER
+LOAD(ADDR) -> POINTER | BOOL | INT | UINT
+STORE(NAME, ADDR)
+JUMP(ADDR)
+JUMPC(COND, ADDR)
+
+Unary Operations:
+!
+++
+-- 
+
+Binary Operations
+=
++
+-
+/
+
+>>
+<<
+\*
+/
+
+Thoughts:
+- No heap, no dynamic allocation
+- Variables are stripped to addresses by compiler
+

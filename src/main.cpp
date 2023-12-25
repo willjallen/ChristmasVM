@@ -18,8 +18,8 @@
  * REG_A
  * REG_B
  * REG_C
+ * REG_RESULT
  * REG_PC
- * REG_ACCUM
  *
  * Memory:
  * MEMORY[addr]
