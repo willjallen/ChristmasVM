@@ -18,7 +18,7 @@
 #include "spdlog/spdlog.h"
 
 #include "CVM.h"
-#include "Lexer.h"
+#include "cmas/Lexer.h"
 #include "ResultCode.h"
 
 

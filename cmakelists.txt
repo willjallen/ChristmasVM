@@ -11,7 +11,9 @@ find_package(spdlog REQUIRED)
 add_executable(${PROJECT_NAME} 
 	src/main.cpp
 	src/CVM.cpp
-	src/Lexer.cpp
+	src/cmas/Lexer.cpp
+	src/cmas/Compiler.cpp
+	src/cmas/Parser.cpp
 	)
 
 # Add -Wall flag for all warnings
@@ -22,6 +24,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_BINARY_DIR}/src")
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_BINARY_DIR}/src/cmas")
+
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 message(STATUS "Using C++ standard: ${CMAKE_CXX_STANDARD}")
 

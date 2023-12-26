@@ -2,11 +2,11 @@
 #define BYTECODE_H
 
 #include <stdint.h>
-
-
+#include <string>
+#include <unordered_map>
 enum class BYTECODE : uint8_t {
 
-/* INSTRUCTIONS */
+	/* INSTRUCTIONS */
 	
 	// HALT -> []
     // Stops the execution
@@ -134,5 +134,70 @@ enum class BYTECODE : uint8_t {
 	REG_FLAGS
 
 };
+
+namespace BYTECODE_INFO {
+
+
+	enum class ARGUMENT_TYPE : uint8_t {
+		REGISTER,
+		ADDRESS,
+		INDIRECT_ADDRESS
+	};
+
+	struct OBJECT {
+		BYTECODE_INFO(BYTECODE bytecode,
+				bool isInstruction,
+				bool isRegister,
+				std::vector<ARGUMENT_TYPE> args) : 
+			bytecode(bytecode) 
+			isInstruction(isInstruction)
+			isRegister(isRegister)
+			args(args);
+		BYTECODE bytecode;
+		bool isInstruction;
+		bool isRegister;
+		std::vector<ARGUMENT_TYPE> args;
+	};
+	
+	// This should be a map to OBJECTs, also idk if this should be in the namespace
+	const std::unordered_map<std::string, BYTECODE> STR_MAP = {
+		{"HALT", BYTECODE::HALT},
+		{"COMPARE", BYTECODE::COMPARE},
+		{"JUMP", BYTECODE::JUMP},
+		{"JUMPE", BYTECODE::JUMPE},
+		{"JUMPLT", BYTECODE::JUMPLT},
+		{"JUMPGT", BYTECODE::JUMPGT},
+		{"JUMPLTE", BYTECODE::JUMPLTE},
+		{"JUMPGTE", BYTECODE::JUMPGTE},
+		{"MOVRR", BYTECODE::MOVRR},
+		{"MOVRM", BYTECODE::MOVRM},
+		{"MOVEMR", BYTECODE::MOVEMR},
+		{"IMOVRR", BYTECODE::IMOVRR},
+		{"IMOVRM", BYTECODE::IMOVRM},
+		{"IMOVEMR", BYTECODE::IMOVEMR},
+		{"ADD", BYTECODE::ADD},
+		{"SUBTRACT", BYTECODE::SUBTRACT},
+		{"MULTIPLY", BYTECODE::MULTIPLY},
+		{"DIVIDE", BYTECODE::DIVIDE},
+		{"INCREMENT", BYTECODE::INCREMENT},
+		{"DECREMENT", BYTECODE::DECREMENT},
+		{"AND", BYTECODE::AND},
+		{"OR", BYTECODE::OR},
+		{"XOR", BYTECODE::XOR},
+		{"NOT", BYTECODE::NOT},
+		{"SHIFTLEFT", BYTECODE::SHIFTLEFT},
+		{"SHIFTRIGHT", BYTECODE::SHIFTRIGHT},
+		{"REG_0", BYTECODE::REG_0},
+		{"REG_1", BYTECODE::REG_1},
+		{"REG_2", BYTECODE::REG_2},
+		{"REG_3", BYTECODE::REG_3},
+		{"REG_4", BYTECODE::REG_4},
+		{"REG_5", BYTECODE::REG_5},
+		{"REG_6", BYTECODE::REG_6},
+		{"REG_7", BYTECODE::REG_7},
+		{"REG_PC", BYTECODE::REG_PC},
+		{"REG_FLAGS", BYTECODE::REG_FLAGS}
+	};
+}
 
 #endif
