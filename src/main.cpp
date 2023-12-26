@@ -9,54 +9,8 @@
 */
 
 /**
- * This is a toy VM to emulate a 16 bit machine. It is equipped to compile cmas-lang (.cmas) to CVM bytecode (.cbc) and running that. 
- * 
- * (+) Denotes implemented
- * 
- * VM MODEL:
- * Registers:
- * REG_A
- * REG_B
- * REG_C
- * REG_RESULT
- * REG_PC
- *
- * Memory:
- * MEMORY[addr]
- *
- * CMAS LANGUAGE:
- *
- * Types (they're all uint16_t under the hood):
- * POINTER
- * BOOL
- * INT
- * UINT
- *
- * Functions:
- * LABEL() -> POINTER
- * VAR(TYPE, NAME) -> POINTER
- * ADDRESSOF(NAME) -> POINTER
- * LOAD(ADDR) -> POINTER | BOOL | INT | UINT
- * STORE(NAME, ADDR)
- * JUMP(ADDR)
- * JUMPC(COND, ADDR)
- *
- * Unary Operations:
- * !
- * ++
- * -- 
- *
- * Binary Operations
- * =
- * +
- * -
- * /
- * * 
- * >>
- * <<
- *
- */
-
+* This is a toy VM to emulate a 16 bit machine. It is equipped to compile cmas-lang (.cmas) to CVM bytecode (.cbc) and running that. 
+*/
 
 #include <iostream>
 #include <filesystem>
@@ -74,8 +28,9 @@ RESULT run(int argc, char** argv){
 	size_t MEMORY_SIZE_MB = 8; 
 	std::filesystem::path programPath;
 
-	bool compile = false;
-	bool execute = false;
+	bool compile_cmas = false;
+	bool compile_cmasir = false;
+	bool execute_cbc = false;
 
 	/* Parse arguments */
 	if(argc == 1){
@@ -86,16 +41,16 @@ RESULT run(int argc, char** argv){
 		
 		// Check if the file exists and is not a directory
 		if (std::filesystem::exists(programPath) && !std::filesystem::is_directory(programPath)) {
-            // Extract the file extension
             std::string extension = programPath.extension().string();
 
-            // Check for .cmas extension
             if (extension == ".cmas") {
-            	compile = true;
+            	compile_cmas = true;
 			}
-            // Check for .cbc extension
+			else if(extension == ".cmasir"){
+				compile_cmasir = true;
+			}
             else if (extension == ".cbc") {
-            	execute = true;
+            	execute_cbc = true;
 			}
             else {
                 std::cout << "Unsupported file extension." << std::endl;
@@ -126,13 +81,18 @@ RESULT run(int argc, char** argv){
 	size_t MEMORY_SIZE =  MEMORY_SIZE_MB * 1024 * 1024 / sizeof(uint16_t);
 	
 
-	if(compile){
-		spdlog::info("Compiling file: " + programPath.filename().string());	
+	if(compile_cmas){
+		spdlog::info("Compiling cmas file: " + programPath.filename().string());	
 		Lexer lexer = Lexer(programPath);
 		lexer.tokenize();	
 	}
 
-	if(execute){
+	if(compile_cmasir){
+		spdlog::info("Compiling cmasir file: " + programPath.filename().string());	
+	
+	}
+
+	if(execute_cbc){
 		/** Initialize the VM */
 		CVM cvm = CVM(MEMORY_SIZE);
 		cvm.init();	
