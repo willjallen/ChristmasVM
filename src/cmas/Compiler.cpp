@@ -36,24 +36,24 @@ RESULT Compiler::compileCmasIRToBytecode(std::filesystem::path filePath) {
             continue; // Skip empty lines
         }
 			
-		BYTECODE_INFO::OBJECT bytecodeInfoObj = BYTECODE_INFO::OBJECT_MAP.at(tokens[0]);
+		BYTECODE_INFO::BYTECODE_OBJECT bytecodeObj = BYTECODE_INFO::OBJECT_FROM_NAME_MAP.at(tokens[0]);
 		
 		// Emit instruction bytecode
-		bytecodeStream << static_cast<uint8_t>(bytecodeInfoObj.bytecode);
+		bytecodeStream << static_cast<uint8_t>(bytecodeObj.bytecode);
 
 		// Retrieve arguments
-		if(tokens.size() - 1 != bytecodeInfoObj.args.size()){
+		if(tokens.size() - 1 != bytecodeObj.args.size()){
 			return RESULT_CODE::INCORRECT_NUM_ARGS;	
 		}
 
 		// Emit arguments bytecode
 		for(int i = 1; i < tokens.size(); i++){
 			auto token = tokens[i];
-			auto argType = bytecodeInfoObj.args[i - 1];
+			auto argType = bytecodeObj.args[i - 1];
 			switch(argType){
 				case BYTECODE_INFO::ARGUMENT_TYPE::REGISTER:
 					// Emit register
-					bytecodeStream << static_cast<uint8_t>(BYTECODE_INFO::OBJECT_MAP.at(token).bytecode);
+					bytecodeStream << static_cast<uint8_t>(BYTECODE_INFO::OBJECT_FROM_NAME_MAP.at(token).bytecode);
 					break;
 				case BYTECODE_INFO::ARGUMENT_TYPE::ADDRESS:
 				case BYTECODE_INFO::ARGUMENT_TYPE::LITERAL:
@@ -64,7 +64,7 @@ RESULT Compiler::compileCmasIRToBytecode(std::filesystem::path filePath) {
 					uint8_t highByte = (value >> 8) & 0xFF; 
 					uint8_t lowByte = value & 0xFF;
 					
-					// Emit address, little endian
+					// Emit address or literal, little endian
 					bytecodeStream << lowByte << highByte;
 					break;
 			}

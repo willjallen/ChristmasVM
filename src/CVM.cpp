@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 #include <functional>
 
 #include "spdlog/spdlog.h"
@@ -52,12 +53,27 @@ uint16_t& CVM::getRegister(enum BYTECODE bytecode){
 	}
 }
 
-uint8_t readUInt8(std::vector<char>& memory, size_t address){
-	return *reinterpret_cast<uint8_t*>(memory.at(address));
+uint8_t CVM::readUInt8(size_t address){
+	return static_cast<uint8_t>(memory.at(address));
+}
+
+uint16_t CVM::readUInt16(size_t address){
+	uint8_t lowByte = readUInt8(address);
+	uint8_t highByte = readUInt8(address+1);
+	// Little endian
+	return static_cast<uint16_t>(lowByte | highByte << 8);
 }
 
 void CVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes){
 	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + 0xff * PCOffsetBytes + 1])));
+}
+
+uint16_t CVM::getAddressArgument(size_t PCOffsetBytes){
+	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
+}
+
+uint16_t CVM::getLiteralArgument(size_t PCOffsetBytes){
+	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
 /*
@@ -71,7 +87,7 @@ RESULT CVM::run(const std::vector<uint16_t>& bytecode){
 
 	if(bytecode.size() > MEMORY_SIZE){
 		spdlog::error("Bytecode is too large");	
-		return RESULT_CODE::OUT_OF_MEMORY_ERROR;
+		return RESULT_CODE::OUT_OF_MEMORY;
 	}
 
 	std::copy(bytecode.begin(), bytecode.end(), memory.data());
@@ -85,35 +101,118 @@ RESULT CVM::run(const std::vector<uint16_t>& bytecode){
 	BYTECODE currInstruction = static_cast<BYTECODE>(memory[REG_PC]);
 	while(currInstruction != BYTECODE::HALT){
 		switch(currInstruction){
-			default: break;
+			default:
+				{
+					spdlog::error("Unimplemented instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
+					return RESULT_CODE::UNIMPLEMENTED_INSTRUCTION;
+				}
 
-			/* COMPARE <regA> <regB> -> [REG_FLAGS] */
+
+			// COMPARE <regA> <regB> -> [REG_FLAGS]
+			// Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and = 
 			case(BYTECODE::COMPARE):
+				{
+					// Bind regA and regB
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
 
-				// Bind regA and regB
-				bindReg(regARef, 1);
-				bindReg(regBRef, 2);
-				auto& regA = regARef.get();
-				auto& regB = regBRef.get();
-
-				// Clear the flag register
-				REG_FLAGS = REG_FLAGS & 0;	
+					// Clear the flag register
+					REG_FLAGS = REG_FLAGS & 0;	
 
 
-				if(regA == regB){
-					REG_FLAGS = REG_FLAGS | FLAG::EQ;
-				}else if(regA < regB){
-					REG_FLAGS = REG_FLAGS | FLAG::LT;
-				}else if(regA > regB){
-					REG_FLAGS = REG_FLAGS | FLAG::GT;
-				}else if(regA <= regB){
-					REG_FLAGS = REG_FLAGS | FLAG::LTE;
-				}else if(regA >= regB){
-					REG_FLAGS = REG_FLAGS | FLAG::GTE;
+					if(regA == regB){
+						REG_FLAGS = REG_FLAGS | FLAG::EQ;
+					}else if(regA < regB){
+						REG_FLAGS = REG_FLAGS | FLAG::LT;
+					}else if(regA > regB){
+						REG_FLAGS = REG_FLAGS | FLAG::GT;
+					}else if(regA <= regB){
+						REG_FLAGS = REG_FLAGS | FLAG::LTE;
+					}else if(regA >= regB){
+						REG_FLAGS = REG_FLAGS | FLAG::GTE;
+					}
+					
+					REG_PC += 0xff * 3 + 1;
+					break;
+				}
+
+			// JUMP <addr> -> []
+			// Sets the PC to a particular address in memory
+			case(BYTECODE::JUMP):
+				{
+					uint16_t addr = getAddressArgument(1);
+					REG_PC = addr;
+					break;
+				}
+
+			// JUMPE <addr> -> []
+			// Sets the PC to a particular address in memory if EQ flag is set
+			case(BYTECODE::JUMPEQ):
+				{
+					if((REG_FLAGS & FLAG::EQ) == FLAG::EQ){
+						uint16_t addr = getAddressArgument(1);
+						REG_PC = addr;
+					}
+					break;
+				}
+
+			// JUMPLT <addr> -> []
+			// Sets the PC to a particular address in memory if LT flag is set
+			case(BYTECODE::JUMPLT):
+				{
+					if((REG_FLAGS & FLAG::LT) == FLAG::LT){
+						uint16_t addr = getAddressArgument(1);
+						REG_PC = addr;
+					}
+					break;
+				}
+
+			// JUMPGT <addr> -> []
+			// Sets the PC to a particular address in memory if GT flag is set
+			case(BYTECODE::JUMPGT):
+				{
+					if((REG_FLAGS & FLAG::GT) == FLAG::GT){
+						uint16_t addr = getAddressArgument(1);
+						REG_PC = addr;
+					}
+					break;
+				}
+
+			// JUMPLTE <addr> -> []
+			// Sets the PC to a particular address in memory if LTE flag is set
+			case(BYTECODE::JUMPLTE):
+				{
+					if((REG_FLAGS & FLAG::LTE) == FLAG::LTE){
+						uint16_t addr = getAddressArgument(1);
+						REG_PC = addr;
+					}
+					break;
 				}
 				
-				REG_PC += 0xff * 3 + 1;
-				break;
+			// JUMPGTE <addr> -> []
+			// Sets the PC to a particular address in memory if GTE flag is set
+			case(BYTECODE::JUMPGTE):
+				{
+					if((REG_FLAGS & FLAG::GTE) == FLAG::GTE){
+						uint16_t addr = getAddressArgument(1);
+						REG_PC = addr;
+					}
+					break;
+				}
+				
+
+			// MOVELR <literal> <regA> -> []
+			// Moves a literal into register A
+				case(BYTECODE::MOVLR):
+					{
+						uint16_t literal = getLiteralArgument(1);
+						bindReg(regARef, 2);
+						auto& regA = regARef.get();
+						regA = literal;
+						break;
+					}
 		}	
 	}
 	

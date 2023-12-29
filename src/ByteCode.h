@@ -21,9 +21,9 @@ enum class BYTECODE : uint8_t {
 	// Sets the PC to a particular address in memory
 	JUMP,
 
-	// JUMPE <addr> -> []
+	// JUMPEQ <addr> -> []
 	// Sets the PC to a particular address in memory if EQ flag is set
-	JUMPE,
+	JUMPEQ,
 
 	// JUMPLT <addr> -> []
 	// Sets the PC to a particular address in memory if LT flag is set
@@ -43,8 +43,8 @@ enum class BYTECODE : uint8_t {
 
 	/* MOVING */
 
-    // MOVELR <literal> <regB> -> []
-    // Moves a literal into register B
+    // MOVELR <literal> <regA> -> []
+    // Moves a literal into register A
     MOVLR,  
 
     // MOVERR <regA> <regB> -> []
@@ -157,8 +157,8 @@ namespace BYTECODE_INFO {
 		ADDRESS,
 	};
 
-	struct OBJECT {
-		OBJECT(BYTECODE bytecode,
+	struct BYTECODE_OBJECT {
+		BYTECODE_OBJECT(BYTECODE bytecode,
 				std::string name,
 				bool isInstruction,
 				bool isRegister,
@@ -174,11 +174,11 @@ namespace BYTECODE_INFO {
 		std::vector<ARGUMENT_TYPE> args;
 	};
 	
-const std::unordered_map<std::string, OBJECT> OBJECT_MAP = {
+const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
         {"HALT", {BYTECODE::HALT, "HALT", true, false, {}}},
         {"COMPARE", {BYTECODE::COMPARE, "COMPARE", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"JUMP", {BYTECODE::JUMP, "JUMP", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPE", {BYTECODE::JUMPE, "JUMPE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
+        {"JUMPEQ", {BYTECODE::JUMPEQ, "JUMPEQ", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPLT", {BYTECODE::JUMPLT, "JUMPLT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPGT", {BYTECODE::JUMPGT, "JUMPGT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPLTE", {BYTECODE::JUMPLTE, "JUMPLTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
@@ -214,6 +214,48 @@ const std::unordered_map<std::string, OBJECT> OBJECT_MAP = {
         {"REG_7", {BYTECODE::REG_7, "REG_7", false, true, {}}},
         {"REG_PC", {BYTECODE::REG_PC, "REG_PC", false, true, {}}},
         {"REG_FLAGS", {BYTECODE::REG_FLAGS, "REG_FLAGS", false, true, {}}}
+    };
+
+    const std::unordered_map<BYTECODE, std::string> NAME_FROM_VALUE_MAP = {
+        {BYTECODE::HALT, "HALT"},
+        {BYTECODE::COMPARE, "COMPARE"},
+        {BYTECODE::JUMP, "JUMP"},
+        {BYTECODE::JUMPEQ, "JUMPEQ"},
+        {BYTECODE::JUMPLT, "JUMPLT"},
+        {BYTECODE::JUMPGT, "JUMPGT"},
+        {BYTECODE::JUMPLTE, "JUMPLTE"},
+        {BYTECODE::JUMPGTE, "JUMPGTE"},
+        {BYTECODE::MOVLR, "MOVLR"},
+        {BYTECODE::MOVRR, "MOVRR"},
+        {BYTECODE::MOVLM, "MOVLM"},
+        {BYTECODE::MOVRM, "MOVRM"},
+        {BYTECODE::MOVEMR, "MOVEMR"},
+        {BYTECODE::MOVLIR, "MOVLIR"},
+        {BYTECODE::MOVIRR, "MOVIRR"},
+        {BYTECODE::MOVIRM, "MOVIRM"},
+        {BYTECODE::MOVEIMR, "MOVEIMR"},
+        {BYTECODE::ADD, "ADD"},
+        {BYTECODE::SUBTRACT, "SUBTRACT"},
+        {BYTECODE::MULTIPLY, "MULTIPLY"},
+        {BYTECODE::DIVIDE, "DIVIDE"},
+        {BYTECODE::INCREMENT, "INCREMENT"},
+        {BYTECODE::DECREMENT, "DECREMENT"},
+        {BYTECODE::AND, "AND"},
+        {BYTECODE::OR, "OR"},
+        {BYTECODE::XOR, "XOR"},
+        {BYTECODE::NOT, "NOT"},
+        {BYTECODE::SHIFTLEFT, "SHIFTLEFT"},
+        {BYTECODE::SHIFTRIGHT, "SHIFTRIGHT"},
+        {BYTECODE::REG_0, "REG_0"},
+        {BYTECODE::REG_1, "REG_1"},
+        {BYTECODE::REG_2, "REG_2"},
+        {BYTECODE::REG_3, "REG_3"},
+        {BYTECODE::REG_4, "REG_4"},
+        {BYTECODE::REG_5, "REG_5"},
+        {BYTECODE::REG_6, "REG_6"},
+        {BYTECODE::REG_7, "REG_7"},
+        {BYTECODE::REG_PC, "REG_PC"},
+        {BYTECODE::REG_FLAGS, "REG_FLAGS"}
     };
 }
 

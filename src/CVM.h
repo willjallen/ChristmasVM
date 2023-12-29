@@ -27,6 +27,9 @@ class CVM{
 		uint8_t readUInt8(size_t address);
 		uint16_t readUInt16(size_t address);
 
+		uint16_t getAddressArgument(size_t PCOffsetBytes);
+		uint16_t getLiteralArgument(size_t PCOffsetBytes);
+
 		uint16_t REG_0;
 		uint16_t REG_1;
 		uint16_t REG_2;
