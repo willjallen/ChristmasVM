@@ -19,6 +19,7 @@
 
 #include "CVM.h"
 #include "cmas/Lexer.h"
+#include "cmas/Compiler.h"
 #include "ResultCode.h"
 
 
@@ -89,6 +90,8 @@ RESULT run(int argc, char** argv){
 
 	if(compile_cmasir){
 		spdlog::info("Compiling cmasir file: " + programPath.filename().string());	
+		Compiler compiler;
+		compiler.compileCmasIRToBytecode(programPath);
 	
 	}
 

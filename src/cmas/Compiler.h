@@ -4,7 +4,7 @@
 
 class Compiler{
 	public:
-		Compiler();
+		Compiler() {}
 		RESULT compileCmasIRToBytecode(std::filesystem::path filePath);
 	private:
 
