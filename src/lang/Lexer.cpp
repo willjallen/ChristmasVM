@@ -3,7 +3,7 @@
 #include <fstream>
 #include "Lexer.h"
 
-std::vector<Token> Lexer::tokenize(){
+std::vector<lexer::Token> Lexer::tokenize(){
 	std::fstream fileStream(filePath.native(), std::fstream::in);
 
 	/* fileStream.open(); */
@@ -13,6 +13,6 @@ std::vector<Token> Lexer::tokenize(){
 	
 
 	}
-	return std::vector<Token>();
+	return std::vector<lexer::Token>();
 }
 

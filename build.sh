@@ -10,7 +10,7 @@ if [ "$1" == "-hard" ]; then
     cd $BUILD_DIR
     cmake ..
     make
-    ./ChristmasVM
+    ./FunVM
 else
     echo "Running in normal mode: building and running..."
     mkdir -p $BUILD_DIR
@@ -19,5 +19,5 @@ else
         cmake ..
     fi
     make
-    ./ChristmasVM ../demo.cmasir
+    ./FunVM ../demo.funasm
 fi

@@ -1,25 +1,29 @@
 
 /**
-  ██████╗██╗  ██╗██████╗ ██╗███████╗████████╗███╗   ███╗ █████╗ ███████╗    ██╗   ██╗███╗   ███╗
-██╔════╝██║  ██║██╔══██╗██║██╔════╝╚══██╔══╝████╗ ████║██╔══██╗██╔════╝    ██║   ██║████╗ ████║
-██║     ███████║██████╔╝██║███████╗   ██║   ██╔████╔██║███████║███████╗    ██║   ██║██╔████╔██║
-██║     ██╔══██║██╔══██╗██║╚════██║   ██║   ██║╚██╔╝██║██╔══██║╚════██║    ╚██╗ ██╔╝██║╚██╔╝██║
-╚██████╗██║  ██║██║  ██║██║███████║   ██║   ██║ ╚═╝ ██║██║  ██║███████║     ╚████╔╝ ██║ ╚═╝ ██║
- ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝      ╚═══╝  ╚═╝     ╚═╝
+███████╗██╗   ██╗███╗   ██╗    ██╗   ██╗███╗   ███╗
+██╔════╝██║   ██║████╗  ██║    ██║   ██║████╗ ████║
+█████╗  ██║   ██║██╔██╗ ██║    ██║   ██║██╔████╔██║
+██╔══╝  ██║   ██║██║╚██╗██║    ╚██╗ ██╔╝██║╚██╔╝██║
+██║     ╚██████╔╝██║ ╚████║     ╚████╔╝ ██║ ╚═╝ ██║
+╚═╝      ╚═════╝ ╚═╝  ╚═══╝      ╚═══╝  ╚═╝     ╚═╝
 */
 
 /**
 * This is a toy VM to emulate a 16 bit machine. It is equipped to compile cmas-lang (.cmas) to CVM bytecode (.cbc) and running that. 
 */
 
+#ifdef _WIN32 
+	#include <Windows.h>
+#endif
+
 #include <iostream>
 #include <filesystem>
 
 #include "spdlog/spdlog.h"
 
-#include "CVM.h"
-#include "cmas/Lexer.h"
-#include "cmas/Compiler.h"
+#include "FVM.h"
+#include "lang/Lexer.h"
+#include "lang/Compiler.h"
 #include "ResultCode.h"
 
 
@@ -29,13 +33,13 @@ RESULT run(int argc, char** argv){
 	size_t MEMORY_SIZE_MB = 8; 
 	std::filesystem::path programPath;
 
-	bool compile_cmas = false;
-	bool compile_cmasir = false;
-	bool execute_cbc = false;
+	bool compile_funlang = false;
+	bool compile_funasm = false;
+	bool execute_fbc = false;
 
 	/* Parse arguments */
 	if(argc == 1){
-		std::cout << "Usage: CVM [program_file] <memory (MB)>" << std::endl;
+		std::cout << "Usage: FVM [program_file] <memory (MB)>" << std::endl;
 		return RESULT_CODE::CLI_ERROR;
 	}else if(argc == 2){
 		programPath = std::filesystem::path(argv[1]);
@@ -44,14 +48,14 @@ RESULT run(int argc, char** argv){
 		if (std::filesystem::exists(programPath) && !std::filesystem::is_directory(programPath)) {
             std::string extension = programPath.extension().string();
 
-            if (extension == ".cmas") {
-            	compile_cmas = true;
+            if (extension == ".funlang") {
+            	compile_funlang = true;
 			}
-			else if(extension == ".cmasir"){
-				compile_cmasir = true;
+			else if(extension == ".funasm"){
+				compile_funasm = true;
 			}
-            else if (extension == ".cbc") {
-            	execute_cbc = true;
+            else if (extension == ".fbc") {
+            	execute_fbc = true;
 			}
             else {
                 std::cout << "Unsupported file extension." << std::endl;
@@ -66,15 +70,15 @@ RESULT run(int argc, char** argv){
 
 	std::cout << std::endl;                         
 	std::cout << std::endl;                         
-	std::cout << " ██████╗██╗   ██╗███╗   ███╗" << std::endl;
+	std::cout << "███████╗██╗   ██╗███╗   ███╗" << std::endl;
 	std::cout << "██╔════╝██║   ██║████╗ ████║" << std::endl;
-	std::cout << "██║     ██║   ██║██╔████╔██║" << std::endl;
-	std::cout << "██║     ╚██╗ ██╔╝██║╚██╔╝██║" << std::endl;
-	std::cout << "╚██████╗ ╚████╔╝ ██║ ╚═╝ ██║" << std::endl;
-	std::cout << " ╚═════╝  ╚═══╝  ╚═╝     ╚═╝" << std::endl;
+	std::cout << "█████╗  ██║   ██║██╔████╔██║" << std::endl;
+	std::cout << "██╔══╝  ╚██╗ ██╔╝██║╚██╔╝██║" << std::endl;
+	std::cout << "██║      ╚████╔╝ ██║ ╚═╝ ██║" << std::endl;
+	std::cout << "╚═╝       ╚═══╝  ╚═╝     ╚═╝" << std::endl;
 	std::cout << std::endl;                         
 	std::cout << std::endl;                         
-	std::cout << "Christmas VM by William Allen" << std::endl;
+	std::cout << "Fun VM by William Allen" << std::endl;
 	std::cout << "Version 0.0.1" << std::endl;	
 
 
@@ -82,22 +86,22 @@ RESULT run(int argc, char** argv){
 	size_t MEMORY_SIZE =  MEMORY_SIZE_MB * 1024 * 1024 / sizeof(uint16_t);
 	
 
-	if(compile_cmas){
-		spdlog::info("Compiling cmas file: " + programPath.filename().string());	
+	if(compile_funlang){
+		spdlog::info("Compiling funlang file: " + programPath.filename().string());	
 		Lexer lexer = Lexer(programPath);
 		lexer.tokenize();	
 	}
 
-	if(compile_cmasir){
-		spdlog::info("Compiling cmasir file: " + programPath.filename().string());	
+	if(compile_funasm){
+		spdlog::info("Compiling funasm file: " + programPath.filename().string());	
 		Compiler compiler;
-		compiler.compileCmasIRToBytecode(programPath);
+		compiler.compileFunasmToBytecode(programPath);
 	
 	}
 
-	if(execute_cbc){
+	if(execute_fbc){
 		/** Initialize the VM */
-		CVM cvm = CVM(MEMORY_SIZE);
+		FVM cvm = FVM(MEMORY_SIZE);
 		cvm.init();	
 	}
 
@@ -106,6 +110,10 @@ RESULT run(int argc, char** argv){
 
 
 int main(int argc, char** argv){
+	#ifdef _WIN32
+		SetConsoleOutputCP(CP_UTF8);
+	#endif
+
 	RESULT result = run(argc, argv);
 	if(result.value == 1){
 		return 0;

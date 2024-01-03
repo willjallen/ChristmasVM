@@ -9,9 +9,8 @@
 #include "../ByteCode.h"
 #include "Compiler.h"
 
-RESULT Compiler::compileCmasIRToBytecode(std::filesystem::path filePath) {
-	spdlog::info("Compiling ir cmas file");
-    std::ifstream fileStream(filePath);
+RESULT Compiler::compileFunasmToBytecode(std::filesystem::path asmPath) {
+    std::ifstream fileStream(asmPath);
 
     if (!fileStream.is_open()) {
         return RESULT_CODE::FILE_NOT_FOUND;
@@ -48,17 +47,17 @@ RESULT Compiler::compileCmasIRToBytecode(std::filesystem::path filePath) {
 
 		// Emit arguments bytecode
 		for(int i = 1; i < tokens.size(); i++){
-			auto token = tokens[i];
+			auto argToken = tokens[i];
 			auto argType = bytecodeObj.args[i - 1];
 			switch(argType){
 				case BYTECODE_INFO::ARGUMENT_TYPE::REGISTER:
 					// Emit register
-					bytecodeStream << static_cast<uint8_t>(BYTECODE_INFO::OBJECT_FROM_NAME_MAP.at(token).bytecode);
+					bytecodeStream << static_cast<uint8_t>(BYTECODE_INFO::OBJECT_FROM_NAME_MAP.at(argToken).bytecode);
 					break;
 				case BYTECODE_INFO::ARGUMENT_TYPE::ADDRESS:
 				case BYTECODE_INFO::ARGUMENT_TYPE::LITERAL:
 					// Convert the hexadecimal string to an unsigned integer
-					uint16_t value = std::stoul(token, nullptr, 16);
+					uint16_t value = static_cast<uint16_t>(std::stoul(argToken, nullptr, 16));
 
 					// Convert to bytes
 					uint8_t highByte = (value >> 8) & 0xFF; 
@@ -77,8 +76,8 @@ RESULT Compiler::compileCmasIRToBytecode(std::filesystem::path filePath) {
     fileStream.close();
 
 	// Write bytecode to a file
-	std::filesystem::path bcFilePath = filePath;
-	bcFilePath.replace_extension(".cbc");
+	std::filesystem::path bcFilePath = asmPath;
+	bcFilePath.replace_extension(".fbc");
 
     std::ofstream outFileStream(bcFilePath);
 	std::string bytecodeString = bytecodeStream.str(); 

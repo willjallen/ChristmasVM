@@ -5,25 +5,25 @@
 #include "ResultCode.h"
 #include "ByteCode.h"
 
-enum FLAG : uint16_t  {
-	EQ = 0x0,
-	LT,
-	LTE,
-	GT,
-	GTE
-};
 
 
-class CVM{
+class FVM{
 	public:
+		enum FLAG : uint16_t  {
+			EQ = 0x0,
+			LT,
+			LTE,
+			GT,
+			GTE
+		};
 
-		CVM(size_t MEMORY_SIZE);
+		FVM(size_t MEMORY_SIZE);
 		RESULT init();
-		RESULT run(const std::vector<uint16_t>& bytecode);
+		RESULT run(const std::vector<uint8_t>& bytecode);
 	private:
 		size_t MEMORY_SIZE;
 
-		std::vector<char> memory;
+		std::vector<uint8_t> memory;
 		uint8_t readUInt8(size_t address);
 		uint16_t readUInt16(size_t address);
 

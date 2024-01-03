@@ -4,56 +4,58 @@
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
-enum class BYTECODE : uint8_t {
+enum class BYTECODE : uint8_t
+{
 
-	/* INSTRUCTIONS */
-	
-	// HALT -> []
+    /* INSTRUCTIONS */
+
+    // HALT -> []
     // Stops the execution
     HALT = 0x00,
 
     /* Binary Ops */
-	// COMPARE <regA> <regB> -> [REG_FLAGS]
-	// Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and = 
-	COMPARE,
-	
-	// JUMP <addr> -> []
-	// Sets the PC to a particular address in memory
-	JUMP,
 
-	// JUMPEQ <addr> -> []
-	// Sets the PC to a particular address in memory if EQ flag is set
-	JUMPEQ,
+    // COMPARE <regA> <regB> -> [REG_FLAGS]
+    // Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and =
+    COMPARE,
 
-	// JUMPLT <addr> -> []
-	// Sets the PC to a particular address in memory if LT flag is set
-	JUMPLT,
+    // JUMP <addr> -> []
+    // Sets the PC to a particular address in memory
+    JUMP,
 
-	// JUMPGT <addr> -> []
-	// Sets the PC to a particular address in memory if GT flag is set
-	JUMPGT,
+    // JUMPEQ <addr> -> []
+    // Sets the PC to a particular address in memory if EQ flag is set
+    JUMPEQ,
 
-	// JUMPLTE <addr> -> []
-	// Sets the PC to a particular address in memory if LTE flag is set
-	JUMPLTE,
+    // JUMPLT <addr> -> []
+    // Sets the PC to a particular address in memory if LT flag is set
+    JUMPLT,
 
-	// JUMPGTE <addr> -> []
-	// Sets the PC to a particular address in memory if GTE flag is set
-	JUMPGTE,
+    // JUMPGT <addr> -> []
+    // Sets the PC to a particular address in memory if GT flag is set
+    JUMPGT,
 
-	/* MOVING */
+    // JUMPLTE <addr> -> []
+    // Sets the PC to a particular address in memory if LTE flag is set
+    JUMPLTE,
+
+    // JUMPGTE <addr> -> []
+    // Sets the PC to a particular address in memory if GTE flag is set
+    JUMPGTE,
+
+    /* MOVING */
 
     // MOVELR <literal> <regA> -> []
     // Moves a literal into register A
-    MOVLR,  
+    MOVLR,
 
     // MOVERR <regA> <regB> -> []
     // Moves the contents of register A into register B
-    MOVRR,  
+    MOVRR,
 
     // MOVELR <literal> <addr> -> []
     // Moves a literal into memory
-    MOVLM,  
+    MOVLM,
 
     // MOVERM <regA> <addr> -> []
     // Moves the contents of register A into memory
@@ -62,16 +64,16 @@ enum class BYTECODE : uint8_t {
     // MOVEMR <addr> <regA> -> []
     // Moves the contents of memory into register A
     MOVEMR,
-	
-	/* INDIRECT MOVING */
-    
-	// MMOVERR <regA> <regB> -> []
-    // Moves the contents of memory at the address inside register A to register B 
-    MOVLIR,  
+
+    /* INDIRECT MOVING */
 
     // MMOVERR <regA> <regB> -> []
-    // Moves the contents of memory at the address inside register A to register B 
-    MOVIRR,  
+    // Moves the contents of memory at the address inside register A to register B
+    MOVLIR,
+
+    // MMOVERR <regA> <regB> -> []
+    // Moves the contents of memory at the address inside register A to register B
+    MOVIRR,
 
     // MMOVERM <regA> <addr> -> []
     // Moves the contents of memory at the address inside register A to memory
@@ -81,12 +83,12 @@ enum class BYTECODE : uint8_t {
     // Moves contents of memory at the address inside memory to register A
     MOVEIMR,
 
-	/* ARITHMETIC */
+    /* ARITHMETIC */
 
     // ADD <regA> <regB> -> [regB]
     // RegisterA + RegisterB -> RegisterB
     ADD,
-    
+
     // SUBTRACT <regA> <regB> -> [regB]
     // RegisterA - RegisterB -> RegisterB
     SUBTRACT,
@@ -107,74 +109,76 @@ enum class BYTECODE : uint8_t {
     // RegisterA - 1 -> RegisterA
     DECREMENT,
 
-	/* BITWISE */
+    /* BITWISE */
 
     // AND <regA> <regB> -> [regB]
     // RegisterA AND RegisterB -> RegisterB
-	AND,
+    AND,
 
     // OR <regA> <regB> -> [regB]
     // RegisterA OR RegisterB -> RegisterB
-	OR,
+    OR,
 
     // XOR <regA> <regB> -> [regB]
     // RegisterA XOR RegisterB -> RegisterB
-	XOR,
-   
-   	// NOT <regA> -> [regA]
+    XOR,
+
+    // NOT <regA> -> [regA]
     // RegisterA -> !RegisterA
     NOT,
 
     // SHIFTLEFT <regA> <literal> -> [regA]
     // RegisterA << literal -> RegisterA
-	SHIFTLEFT,
+    SHIFTLEFT,
 
     // SHIFTRIGHT <regA> <literal> -> [regA]
     // RegisterA >> literal  -> RegisterA
-	SHIFTRIGHT,
+    SHIFTRIGHT,
 
-	/* REGISTERS */	
+    /* REGISTERS */
 
-	REG_0,
-	REG_1,
-	REG_2,
-	REG_3,
-	REG_4,
-	REG_5,
-	REG_6,
-	REG_7,
-	REG_PC,
-	REG_FLAGS
+    REG_0,
+    REG_1,
+    REG_2,
+    REG_3,
+    REG_4,
+    REG_5,
+    REG_6,
+    REG_7,
+    REG_PC,
+    REG_FLAGS
 
 };
 
-namespace BYTECODE_INFO {
+namespace BYTECODE_INFO
+{
 
+    enum class ARGUMENT_TYPE : uint8_t
+    {
+        REGISTER,
+        LITERAL,
+        ADDRESS,
+    };
 
-	enum class ARGUMENT_TYPE : uint8_t {
-		REGISTER,
-		LITERAL,
-		ADDRESS,
-	};
+    struct BYTECODE_OBJECT
+    {
+        BYTECODE_OBJECT(BYTECODE bytecode,
+                        std::string name,
+                        bool isInstruction,
+                        bool isRegister,
+                        std::vector<ARGUMENT_TYPE> args) : bytecode(bytecode),
+                                                           isInstruction(isInstruction),
+                                                           isRegister(isRegister),
+                                                           args(args)
+        {
+        }
+        BYTECODE bytecode;
+        bool isInstruction;
+        bool isRegister;
+        std::vector<ARGUMENT_TYPE> args;
+    };
 
-	struct BYTECODE_OBJECT {
-		BYTECODE_OBJECT(BYTECODE bytecode,
-				std::string name,
-				bool isInstruction,
-				bool isRegister,
-				std::vector<ARGUMENT_TYPE> args) : 
-			bytecode(bytecode),
-			isInstruction(isInstruction),
-			isRegister(isRegister),
-			args(args)
-			{}
-		BYTECODE bytecode;
-		bool isInstruction;
-		bool isRegister;
-		std::vector<ARGUMENT_TYPE> args;
-	};
-	
-const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
+    const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
         {"HALT", {BYTECODE::HALT, "HALT", true, false, {}}},
         {"COMPARE", {BYTECODE::COMPARE, "COMPARE", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"JUMP", {BYTECODE::JUMP, "JUMP", true, false, {ARGUMENT_TYPE::ADDRESS}}},
@@ -183,10 +187,10 @@ const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
         {"JUMPGT", {BYTECODE::JUMPGT, "JUMPGT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPLTE", {BYTECODE::JUMPLTE, "JUMPLTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPGTE", {BYTECODE::JUMPGTE, "JUMPGTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-		{"MOVRR", {BYTECODE::MOVRR, "MOVRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVRR", {BYTECODE::MOVRR, "MOVRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"MOVRM", {BYTECODE::MOVRM, "MOVRM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
         {"MOVEMR", {BYTECODE::MOVEMR, "MOVEMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
-		{"MOVLR", {BYTECODE::MOVLR, "MOVLR", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVLR", {BYTECODE::MOVLR, "MOVLR", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
         {"MOVLM", {BYTECODE::MOVLM, "MOVLM", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::ADDRESS}}},
         {"MOVLIR", {BYTECODE::MOVLIR, "MOVLIR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"MOVIRR", {BYTECODE::MOVIRR, "MOVIRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
@@ -213,8 +217,7 @@ const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
         {"REG_6", {BYTECODE::REG_6, "REG_6", false, true, {}}},
         {"REG_7", {BYTECODE::REG_7, "REG_7", false, true, {}}},
         {"REG_PC", {BYTECODE::REG_PC, "REG_PC", false, true, {}}},
-        {"REG_FLAGS", {BYTECODE::REG_FLAGS, "REG_FLAGS", false, true, {}}}
-    };
+        {"REG_FLAGS", {BYTECODE::REG_FLAGS, "REG_FLAGS", false, true, {}}}};
 
     const std::unordered_map<BYTECODE, std::string> NAME_FROM_VALUE_MAP = {
         {BYTECODE::HALT, "HALT"},
@@ -255,8 +258,7 @@ const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
         {BYTECODE::REG_6, "REG_6"},
         {BYTECODE::REG_7, "REG_7"},
         {BYTECODE::REG_PC, "REG_PC"},
-        {BYTECODE::REG_FLAGS, "REG_FLAGS"}
-    };
+        {BYTECODE::REG_FLAGS, "REG_FLAGS"}};
 }
 
 #endif

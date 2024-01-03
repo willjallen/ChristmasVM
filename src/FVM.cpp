@@ -4,11 +4,11 @@
 
 #include "spdlog/spdlog.h"
 
-#include "CVM.h"
+#include "FVM.h"
 #include "ResultCode.h"
 #include "ByteCode.h"
 
-CVM::CVM(size_t MEMORY_SIZE) : MEMORY_SIZE(MEMORY_SIZE){
+FVM::FVM(size_t MEMORY_SIZE) : MEMORY_SIZE(MEMORY_SIZE){
 
 
 }
@@ -17,12 +17,12 @@ CVM::CVM(size_t MEMORY_SIZE) : MEMORY_SIZE(MEMORY_SIZE){
  * Initializes the VM. Sets up memory and registers
  * @returns RESULT_CODE The result of the operation.
  */
-RESULT CVM::init(){
+RESULT FVM::init(){
 	/* Initialize the VM */
 
 	/* Initialize memory and registers */
-	memory = std::vector<char>(MEMORY_SIZE);
-	std::fill(memory.begin(), memory.end(), 0);
+	memory = std::vector<uint8_t>(MEMORY_SIZE);
+	std::fill(memory.begin(), memory.end(), static_cast<uint8_t>(0));
 	
 	REG_0 = 0;
 	REG_1 = 0;
@@ -38,7 +38,7 @@ RESULT CVM::init(){
 }
 
 
-uint16_t& CVM::getRegister(enum BYTECODE bytecode){
+uint16_t& FVM::getRegister(enum BYTECODE bytecode){
 	switch(bytecode){
 		default:				   return REG_0;
 		case BYTECODE::REG_0:      return REG_0;
@@ -53,26 +53,26 @@ uint16_t& CVM::getRegister(enum BYTECODE bytecode){
 	}
 }
 
-uint8_t CVM::readUInt8(size_t address){
+uint8_t FVM::readUInt8(size_t address){
 	return static_cast<uint8_t>(memory.at(address));
 }
 
-uint16_t CVM::readUInt16(size_t address){
+uint16_t FVM::readUInt16(size_t address){
 	uint8_t lowByte = readUInt8(address);
 	uint8_t highByte = readUInt8(address+1);
 	// Little endian
 	return static_cast<uint16_t>(lowByte | highByte << 8);
 }
 
-void CVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes){
+void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes){
 	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + 0xff * PCOffsetBytes + 1])));
 }
 
-uint16_t CVM::getAddressArgument(size_t PCOffsetBytes){
+uint16_t FVM::getAddressArgument(size_t PCOffsetBytes){
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
-uint16_t CVM::getLiteralArgument(size_t PCOffsetBytes){
+uint16_t FVM::getLiteralArgument(size_t PCOffsetBytes){
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
@@ -80,7 +80,7 @@ uint16_t CVM::getLiteralArgument(size_t PCOffsetBytes){
  * Runs the VM. Executes each bytecode in sequence.
  * @returns RESULT_CODE The result of the operation.
  */
-RESULT CVM::run(const std::vector<uint16_t>& bytecode){
+RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 	
 	/* Load the bytecode into memory */
 	spdlog::info("Loading bytecode into memory");
