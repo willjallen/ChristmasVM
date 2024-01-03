@@ -1,0 +1,199 @@
+{
+  "bytecode": [
+    {
+      "name": "HALT",
+      "args": [],
+      "comments": ["Stops the execution", "HALT -> []"]
+    },
+    {
+      "name": "COMPARE",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and =", "COMPARE <regA> <regB> -> [REG_FLAGS]"]
+    },
+    {
+      "name": "JUMP",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory", "JUMP <addr> -> []"]
+    },
+    {
+      "name": "JUMPEQ",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory if EQ flag is set", "JUMPEQ <addr> -> []"]
+    },
+    {
+      "name": "JUMPLT",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory if LT flag is set", "JUMPLT <addr> -> []"]
+    },
+    {
+      "name": "JUMPGT",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory if GT flag is set", "JUMPGT <addr> -> []"]
+    },
+    {
+      "name": "JUMPLTE",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory if LTE flag is set", "JUMPLTE <addr> -> []"]
+    },
+    {
+      "name": "JUMPGTE",
+      "args": ["ADDRESS"],
+      "comments": ["Sets the PC to a particular address in memory if GTE flag is set", "JUMPGTE <addr> -> []"]
+    },
+    {
+      "name": "MOVELR",
+      "args": ["LITERAL", "REGISTER"],
+      "comments": ["Moves a literal into register A", "MOVELR <literal> <regA> -> []"]
+    },
+    {
+      "name": "MOVERR",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["Moves the contents of register A into register B", "MOVERR <regA> <regB> -> []"]
+    },
+    {
+      "name": "MOVELM",
+      "args": ["LITERAL", "ADDRESS"],
+      "comments": ["Moves a literal into memory", "MOVELM <literal> <addr> -> []"]
+    },
+    {
+      "name": "MOVERM",
+      "args": ["REGISTER", "ADDRESS"],
+      "comments": ["Moves the contents of register A into memory", "MOVERM <regA> <addr> -> []"]
+    },
+    {
+      "name": "MOVEEMR",
+      "args": ["ADDRESS", "REGISTER"],
+      "comments": ["Moves the contents of memory into register A", "MOVEEMR <addr> <regA> -> []"]
+    },
+    {
+      "name": "MOVELIR",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["Moves the contents of memory at the address inside register A to register B", "MOVELIR <regA> <regB> -> []"]
+    },
+    {
+      "name": "MOVEIRR",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["Moves the contents of memory at the address inside register A to register B", "MOVEIRR <regA> <regB> -> []"]
+    },
+    {
+      "name": "MOVEIRM",
+      "args": ["REGISTER", "ADDRESS"],
+      "comments": ["Moves the contents of memory at the address inside register A to memory", "MOVEIRM <regA> <addr> -> []"]
+    },
+    {
+      "name": "MOVEIMR",
+      "args": ["ADDRESS", "REGISTER"],
+      "comments": ["Moves contents of memory at the address inside memory to register A", "MOVEIMR <addr> <regA> -> []"]
+    },
+    {
+      "name": "ADD",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA + RegisterB -> RegisterB", "ADD <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "SUBTRACT",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA - RegisterB -> RegisterB", "SUBTRACT <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "MULTIPLY",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA * RegisterB -> RegisterB", "MULTIPLY <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "DIVIDE",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA / RegisterB -> RegisterB", "DIVIDE <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "INCREMENT",
+      "args": ["REGISTER"],
+      "comments": ["RegisterA + 1 -> RegisterA", "INCREMENT <regA> -> [regA]"]
+    },
+    {
+      "name": "DECREMENT",
+      "args": ["REGISTER"],
+      "comments": ["RegisterA - 1 -> RegisterA", "DECREMENT <regA> -> [regA]"]
+    },
+    {
+      "name": "AND",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA AND RegisterB -> RegisterB", "AND <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "OR",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA OR RegisterB -> RegisterB", "OR <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "XOR",
+      "args": ["REGISTER", "REGISTER"],
+      "comments": ["RegisterA XOR RegisterB -> RegisterB", "XOR <regA> <regB> -> [regB]"]
+    },
+    {
+      "name": "NOT",
+      "args": ["REGISTER"],
+      "comments": ["RegisterA -> !RegisterA", "NOT <regA> -> [regA]"]
+    },
+    {
+      "name": "SHIFTLEFT",
+      "args": ["REGISTER", "LITERAL"],
+      "comments": ["RegisterA << literal -> RegisterA", "SHIFTLEFT <regA> <literal> -> [regA]"]
+    },
+    {
+      "name": "SHIFTRIGHT",
+      "args": ["REGISTER", "LITERAL"],
+      "comments": ["RegisterA >> literal  -> RegisterA", "SHIFTRIGHT <regA> <literal> -> [regA]"]
+    },
+    {
+      "name": "REG_0",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_1",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_2",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_3",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_4",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_5",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_6",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_7",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_PC",
+      "args": [],
+      "comments": []
+    },
+    {
+      "name": "REG_FLAGS",
+      "args": [],
+      "comments": []
+    }
+  ]
+}

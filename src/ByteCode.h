@@ -1,264 +1,271 @@
+
 #ifndef BYTECODE_H
 #define BYTECODE_H
+
 
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
-enum class BYTECODE : uint8_t
-{
 
-    /* INSTRUCTIONS */
 
-    // HALT -> []
-    // Stops the execution
-    HALT = 0x00,
+enum class BYTECODE : uint8_t {
 
-    /* Binary Ops */
+	// Stops the execution
+	// HALT -> []
+	HALT = 0x00,
 
-    // COMPARE <regA> <regB> -> [REG_FLAGS]
-    // Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and =
-    COMPARE,
+	// Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and =
+	// COMPARE <regA> <regB> -> [REG_FLAGS]
+	COMPARE,
 
-    // JUMP <addr> -> []
-    // Sets the PC to a particular address in memory
-    JUMP,
+	// Sets the PC to a particular address in memory
+	// JUMP <addr> -> []
+	JUMP,
 
-    // JUMPEQ <addr> -> []
-    // Sets the PC to a particular address in memory if EQ flag is set
-    JUMPEQ,
+	// Sets the PC to a particular address in memory if EQ flag is set
+	// JUMPEQ <addr> -> []
+	JUMPEQ,
 
-    // JUMPLT <addr> -> []
-    // Sets the PC to a particular address in memory if LT flag is set
-    JUMPLT,
+	// Sets the PC to a particular address in memory if LT flag is set
+	// JUMPLT <addr> -> []
+	JUMPLT,
 
-    // JUMPGT <addr> -> []
-    // Sets the PC to a particular address in memory if GT flag is set
-    JUMPGT,
+	// Sets the PC to a particular address in memory if GT flag is set
+	// JUMPGT <addr> -> []
+	JUMPGT,
 
-    // JUMPLTE <addr> -> []
-    // Sets the PC to a particular address in memory if LTE flag is set
-    JUMPLTE,
+	// Sets the PC to a particular address in memory if LTE flag is set
+	// JUMPLTE <addr> -> []
+	JUMPLTE,
 
-    // JUMPGTE <addr> -> []
-    // Sets the PC to a particular address in memory if GTE flag is set
-    JUMPGTE,
+	// Sets the PC to a particular address in memory if GTE flag is set
+	// JUMPGTE <addr> -> []
+	JUMPGTE,
 
-    /* MOVING */
+	// Moves a literal into register A
+	// MOVELR <literal> <regA> -> []
+	MOVELR,
 
-    // MOVELR <literal> <regA> -> []
-    // Moves a literal into register A
-    MOVELR,
+	// Moves the contents of register A into register B
+	// MOVERR <regA> <regB> -> []
+	MOVERR,
 
-    // MOVERR <regA> <regB> -> []
-    // Moves the contents of register A into register B
-    MOVERR,
+	// Moves a literal into memory
+	// MOVELM <literal> <addr> -> []
+	MOVELM,
 
-    // MOVELR <literal> <addr> -> []
-    // Moves a literal into memory
-    MOVELM,
+	// Moves the contents of register A into memory
+	// MOVERM <regA> <addr> -> []
+	MOVERM,
 
-    // MOVERM <regA> <addr> -> []
-    // Moves the contents of register A into memory
-    MOVERM,
+	// Moves the contents of memory into register A
+	// MOVEEMR <addr> <regA> -> []
+	MOVEEMR,
 
-    // MOVEMR <addr> <regA> -> []
-    // Moves the contents of memory into register A
-    MOVEEMR,
+	// Moves the contents of memory at the address inside register A to register B
+	// MOVELIR <regA> <regB> -> []
+	MOVELIR,
 
-    /* INDIRECT MOVING */
+	// Moves the contents of memory at the address inside register A to register B
+	// MOVEIRR <regA> <regB> -> []
+	MOVEIRR,
 
-    // MOVERR <regA> <regB> -> []
-    // Moves the contents of memory at the address inside register A to register B
-    MOVELIR,
+	// Moves the contents of memory at the address inside register A to memory
+	// MOVEIRM <regA> <addr> -> []
+	MOVEIRM,
 
-    // MOVERR <regA> <regB> -> []
-    // Moves the contents of memory at the address inside register A to register B
-    MOVEIRR,
+	// Moves contents of memory at the address inside memory to register A
+	// MOVEIMR <addr> <regA> -> []
+	MOVEIMR,
 
-    // MOVERM <regA> <addr> -> []
-    // Moves the contents of memory at the address inside register A to memory
-    MOVEIRM,
+	// RegisterA + RegisterB -> RegisterB
+	// ADD <regA> <regB> -> [regB]
+	ADD,
 
-    // MOVEMR <addr> <regA> -> []
-    // Moves contents of memory at the address inside memory to register A
-    MOVEIMR,
+	// RegisterA - RegisterB -> RegisterB
+	// SUBTRACT <regA> <regB> -> [regB]
+	SUBTRACT,
 
-    /* ARITHMETIC */
+	// RegisterA * RegisterB -> RegisterB
+	// MULTIPLY <regA> <regB> -> [regB]
+	MULTIPLY,
 
-    // ADD <regA> <regB> -> [regB]
-    // RegisterA + RegisterB -> RegisterB
-    ADD,
+	// RegisterA / RegisterB -> RegisterB
+	// DIVIDE <regA> <regB> -> [regB]
+	DIVIDE,
 
-    // SUBTRACT <regA> <regB> -> [regB]
-    // RegisterA - RegisterB -> RegisterB
-    SUBTRACT,
+	// RegisterA + 1 -> RegisterA
+	// INCREMENT <regA> -> [regA]
+	INCREMENT,
 
-    // MULTIPLY <regA> <regB> -> [regB]
-    // RegisterA * RegisterB -> RegisterB
-    MULTIPLY,
+	// RegisterA - 1 -> RegisterA
+	// DECREMENT <regA> -> [regA]
+	DECREMENT,
 
-    // DIVIDE <regA> <regB> -> [regB]
-    // RegisterA / RegisterB -> RegisterB
-    DIVIDE,
+	// RegisterA AND RegisterB -> RegisterB
+	// AND <regA> <regB> -> [regB]
+	AND,
 
-    // INCREMENT <regA> -> [regA]
-    // RegisterA + 1 -> RegisterA
-    INCREMENT,
+	// RegisterA OR RegisterB -> RegisterB
+	// OR <regA> <regB> -> [regB]
+	OR,
 
-    // DECREMENT <regA> -> [regA]
-    // RegisterA - 1 -> RegisterA
-    DECREMENT,
+	// RegisterA XOR RegisterB -> RegisterB
+	// XOR <regA> <regB> -> [regB]
+	XOR,
 
-    /* BITWISE */
+	// RegisterA -> !RegisterA
+	// NOT <regA> -> [regA]
+	NOT,
 
-    // AND <regA> <regB> -> [regB]
-    // RegisterA AND RegisterB -> RegisterB
-    AND,
+	// RegisterA << literal -> RegisterA
+	// SHIFTLEFT <regA> <literal> -> [regA]
+	SHIFTLEFT,
 
-    // OR <regA> <regB> -> [regB]
-    // RegisterA OR RegisterB -> RegisterB
-    OR,
+	// RegisterA >> literal  -> RegisterA
+	// SHIFTRIGHT <regA> <literal> -> [regA]
+	SHIFTRIGHT,
 
-    // XOR <regA> <regB> -> [regB]
-    // RegisterA XOR RegisterB -> RegisterB
-    XOR,
 
-    // NOT <regA> -> [regA]
-    // RegisterA -> !RegisterA
-    NOT,
+	REG_0,
 
-    // SHIFTLEFT <regA> <literal> -> [regA]
-    // RegisterA << literal -> RegisterA
-    SHIFTLEFT,
 
-    // SHIFTRIGHT <regA> <literal> -> [regA]
-    // RegisterA >> literal  -> RegisterA
-    SHIFTRIGHT,
+	REG_1,
 
-    /* REGISTERS */
 
-    REG_0,
-    REG_1,
-    REG_2,
-    REG_3,
-    REG_4,
-    REG_5,
-    REG_6,
-    REG_7,
-    REG_PC,
-    REG_FLAGS
+	REG_2,
+
+
+	REG_3,
+
+
+	REG_4,
+
+
+	REG_5,
+
+
+	REG_6,
+
+
+	REG_7,
+
+
+	REG_PC,
+
+
+	REG_FLAGS,
 
 };
 
-namespace BYTECODE_INFO
-{
+namespace BYTECODE_INFO {
 
-    enum class ARGUMENT_TYPE : uint8_t
-    {
-        REGISTER,
-        LITERAL,
-        ADDRESS,
-    };
+	enum class ARGUMENT_TYPE : uint8_t
+	{
+		REGISTER,
+		LITERAL,
+		ADDRESS,
+	};
 
-    struct BYTECODE_OBJECT
-    {
-        BYTECODE_OBJECT(BYTECODE bytecode,
-                        std::string name,
-                        bool isInstruction,
-                        bool isRegister,
-                        std::vector<ARGUMENT_TYPE> args) : bytecode(bytecode),
-                                                           isInstruction(isInstruction),
-                                                           isRegister(isRegister),
-                                                           args(args)
-        {
-        }
-        BYTECODE bytecode;
-        bool isInstruction;
-        bool isRegister;
-        std::vector<ARGUMENT_TYPE> args;
-    };
 
-    const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
-        {"HALT", {BYTECODE::HALT, "HALT", true, false, {}}},
-        {"COMPARE", {BYTECODE::COMPARE, "COMPARE", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"JUMP", {BYTECODE::JUMP, "JUMP", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPEQ", {BYTECODE::JUMPEQ, "JUMPEQ", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPLT", {BYTECODE::JUMPLT, "JUMPLT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPGT", {BYTECODE::JUMPGT, "JUMPGT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPLTE", {BYTECODE::JUMPLTE, "JUMPLTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"JUMPGTE", {BYTECODE::JUMPGTE, "JUMPGTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVERR", {BYTECODE::MOVERR, "MOVERR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVERM", {BYTECODE::MOVERM, "MOVERM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVEEMR", {BYTECODE::MOVEEMR, "MOVEEMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVELR", {BYTECODE::MOVELR, "MOVELR", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVELM", {BYTECODE::MOVELM, "MOVELM", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVELIR", {BYTECODE::MOVELIR, "MOVELIR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVEIRR", {BYTECODE::MOVEIRR, "MOVEIRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVEIRM", {BYTECODE::MOVEIRM, "MOVEIRM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVEIMR", {BYTECODE::MOVEIMR, "MOVEEIMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
-        {"ADD", {BYTECODE::ADD, "ADD", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"SUBTRACT", {BYTECODE::SUBTRACT, "SUBTRACT", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MULTIPLY", {BYTECODE::MULTIPLY, "MULTIPLY", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"DIVIDE", {BYTECODE::DIVIDE, "DIVIDE", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"INCREMENT", {BYTECODE::INCREMENT, "INCREMENT", true, false, {ARGUMENT_TYPE::REGISTER}}},
-        {"DECREMENT", {BYTECODE::DECREMENT, "DECREMENT", true, false, {ARGUMENT_TYPE::REGISTER}}},
-        {"AND", {BYTECODE::AND, "AND", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"OR", {BYTECODE::OR, "OR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"XOR", {BYTECODE::XOR, "XOR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"NOT", {BYTECODE::NOT, "NOT", true, false, {ARGUMENT_TYPE::REGISTER}}},
-        {"SHIFTLEFT", {BYTECODE::SHIFTLEFT, "SHIFTLEFT", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::LITERAL}}},
-        {"SHIFTRIGHT", {BYTECODE::SHIFTRIGHT, "SHIFTRIGHT", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::LITERAL}}},
-        {"REG_0", {BYTECODE::REG_0, "REG_0", false, true, {}}},
-        {"REG_1", {BYTECODE::REG_1, "REG_1", false, true, {}}},
-        {"REG_2", {BYTECODE::REG_2, "REG_2", false, true, {}}},
-        {"REG_3", {BYTECODE::REG_3, "REG_3", false, true, {}}},
-        {"REG_4", {BYTECODE::REG_4, "REG_4", false, true, {}}},
-        {"REG_5", {BYTECODE::REG_5, "REG_5", false, true, {}}},
-        {"REG_6", {BYTECODE::REG_6, "REG_6", false, true, {}}},
-        {"REG_7", {BYTECODE::REG_7, "REG_7", false, true, {}}},
-        {"REG_PC", {BYTECODE::REG_PC, "REG_PC", false, true, {}}},
-        {"REG_FLAGS", {BYTECODE::REG_FLAGS, "REG_FLAGS", false, true, {}}}};
 
-    const std::unordered_map<BYTECODE, std::string> NAME_FROM_VALUE_MAP = {
-        {BYTECODE::HALT, "HALT"},
-        {BYTECODE::COMPARE, "COMPARE"},
-        {BYTECODE::JUMP, "JUMP"},
-        {BYTECODE::JUMPEQ, "JUMPEQ"},
-        {BYTECODE::JUMPLT, "JUMPLT"},
-        {BYTECODE::JUMPGT, "JUMPGT"},
-        {BYTECODE::JUMPLTE, "JUMPLTE"},
-        {BYTECODE::JUMPGTE, "JUMPGTE"},
-        {BYTECODE::MOVELR, "MOVELR"},
-        {BYTECODE::MOVERR, "MOVERR"},
-        {BYTECODE::MOVELM, "MOVELM"},
-        {BYTECODE::MOVERM, "MOVERM"},
-        {BYTECODE::MOVEEMR, "MOVEEMR"},
-        {BYTECODE::MOVELIR, "MOVELIR"},
-        {BYTECODE::MOVEIRR, "MOVEIRR"},
-        {BYTECODE::MOVEIRM, "MOVEIRM"},
-        {BYTECODE::MOVEIMR, "MOVEIMR"},
-        {BYTECODE::ADD, "ADD"},
-        {BYTECODE::SUBTRACT, "SUBTRACT"},
-        {BYTECODE::MULTIPLY, "MULTIPLY"},
-        {BYTECODE::DIVIDE, "DIVIDE"},
-        {BYTECODE::INCREMENT, "INCREMENT"},
-        {BYTECODE::DECREMENT, "DECREMENT"},
-        {BYTECODE::AND, "AND"},
-        {BYTECODE::OR, "OR"},
-        {BYTECODE::XOR, "XOR"},
-        {BYTECODE::NOT, "NOT"},
-        {BYTECODE::SHIFTLEFT, "SHIFTLEFT"},
-        {BYTECODE::SHIFTRIGHT, "SHIFTRIGHT"},
-        {BYTECODE::REG_0, "REG_0"},
-        {BYTECODE::REG_1, "REG_1"},
-        {BYTECODE::REG_2, "REG_2"},
-        {BYTECODE::REG_3, "REG_3"},
-        {BYTECODE::REG_4, "REG_4"},
-        {BYTECODE::REG_5, "REG_5"},
-        {BYTECODE::REG_6, "REG_6"},
-        {BYTECODE::REG_7, "REG_7"},
-        {BYTECODE::REG_PC, "REG_PC"},
-        {BYTECODE::REG_FLAGS, "REG_FLAGS"}};
-}
+	struct BYTECODE_OBJECT
+	{
+		BYTECODE_OBJECT(BYTECODE bytecode,
+						std::string name,
+						std::vector<ARGUMENT_TYPE> args) : bytecode(bytecode),
+														   name(name),
+														   args(args)
+		{
+		}
+		BYTECODE bytecode;
+		std::string name;
+		std::vector<ARGUMENT_TYPE> args;
+	};
 
+
+	const std::unordered_map<std::string, BYTECODE_OBJECT> OBJECT_FROM_NAME_MAP = {
+		{"HALT", {BYTECODE::HALT, "HALT", {}}},
+		{"COMPARE", {BYTECODE::COMPARE, "COMPARE", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"JUMP", {BYTECODE::JUMP, "JUMP", {ARGUMENT_TYPE::ADDRESS}}},
+		{"JUMPEQ", {BYTECODE::JUMPEQ, "JUMPEQ", {ARGUMENT_TYPE::ADDRESS}}},
+		{"JUMPLT", {BYTECODE::JUMPLT, "JUMPLT", {ARGUMENT_TYPE::ADDRESS}}},
+		{"JUMPGT", {BYTECODE::JUMPGT, "JUMPGT", {ARGUMENT_TYPE::ADDRESS}}},
+		{"JUMPLTE", {BYTECODE::JUMPLTE, "JUMPLTE", {ARGUMENT_TYPE::ADDRESS}}},
+		{"JUMPGTE", {BYTECODE::JUMPGTE, "JUMPGTE", {ARGUMENT_TYPE::ADDRESS}}},
+		{"MOVELR", {BYTECODE::MOVELR, "MOVELR", {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
+		{"MOVERR", {BYTECODE::MOVERR, "MOVERR", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"MOVELM", {BYTECODE::MOVELM, "MOVELM", {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::ADDRESS}}},
+		{"MOVERM", {BYTECODE::MOVERM, "MOVERM", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
+		{"MOVEEMR", {BYTECODE::MOVEEMR, "MOVEEMR", {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
+		{"MOVELIR", {BYTECODE::MOVELIR, "MOVELIR", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"MOVEIRR", {BYTECODE::MOVEIRR, "MOVEIRR", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"MOVEIRM", {BYTECODE::MOVEIRM, "MOVEIRM", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
+		{"MOVEIMR", {BYTECODE::MOVEIMR, "MOVEIMR", {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
+		{"ADD", {BYTECODE::ADD, "ADD", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"SUBTRACT", {BYTECODE::SUBTRACT, "SUBTRACT", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"MULTIPLY", {BYTECODE::MULTIPLY, "MULTIPLY", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"DIVIDE", {BYTECODE::DIVIDE, "DIVIDE", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"INCREMENT", {BYTECODE::INCREMENT, "INCREMENT", {ARGUMENT_TYPE::REGISTER}}},
+		{"DECREMENT", {BYTECODE::DECREMENT, "DECREMENT", {ARGUMENT_TYPE::REGISTER}}},
+		{"AND", {BYTECODE::AND, "AND", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"OR", {BYTECODE::OR, "OR", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"XOR", {BYTECODE::XOR, "XOR", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+		{"NOT", {BYTECODE::NOT, "NOT", {ARGUMENT_TYPE::REGISTER}}},
+		{"SHIFTLEFT", {BYTECODE::SHIFTLEFT, "SHIFTLEFT", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::LITERAL}}},
+		{"SHIFTRIGHT", {BYTECODE::SHIFTRIGHT, "SHIFTRIGHT", {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::LITERAL}}},
+		{"REG_0", {BYTECODE::REG_0, "REG_0", {}}},
+		{"REG_1", {BYTECODE::REG_1, "REG_1", {}}},
+		{"REG_2", {BYTECODE::REG_2, "REG_2", {}}},
+		{"REG_3", {BYTECODE::REG_3, "REG_3", {}}},
+		{"REG_4", {BYTECODE::REG_4, "REG_4", {}}},
+		{"REG_5", {BYTECODE::REG_5, "REG_5", {}}},
+		{"REG_6", {BYTECODE::REG_6, "REG_6", {}}},
+		{"REG_7", {BYTECODE::REG_7, "REG_7", {}}},
+		{"REG_PC", {BYTECODE::REG_PC, "REG_PC", {}}},
+		{"REG_FLAGS", {BYTECODE::REG_FLAGS, "REG_FLAGS", {}}},
+	};
+
+	const std::unordered_map<BYTECODE, std::string> NAME_FROM_VALUE_MAP = {
+		{BYTECODE::HALT, "HALT"},
+		{BYTECODE::COMPARE, "COMPARE"},
+		{BYTECODE::JUMP, "JUMP"},
+		{BYTECODE::JUMPEQ, "JUMPEQ"},
+		{BYTECODE::JUMPLT, "JUMPLT"},
+		{BYTECODE::JUMPGT, "JUMPGT"},
+		{BYTECODE::JUMPLTE, "JUMPLTE"},
+		{BYTECODE::JUMPGTE, "JUMPGTE"},
+		{BYTECODE::MOVELR, "MOVELR"},
+		{BYTECODE::MOVERR, "MOVERR"},
+		{BYTECODE::MOVELM, "MOVELM"},
+		{BYTECODE::MOVERM, "MOVERM"},
+		{BYTECODE::MOVEEMR, "MOVEEMR"},
+		{BYTECODE::MOVELIR, "MOVELIR"},
+		{BYTECODE::MOVEIRR, "MOVEIRR"},
+		{BYTECODE::MOVEIRM, "MOVEIRM"},
+		{BYTECODE::MOVEIMR, "MOVEIMR"},
+		{BYTECODE::ADD, "ADD"},
+		{BYTECODE::SUBTRACT, "SUBTRACT"},
+		{BYTECODE::MULTIPLY, "MULTIPLY"},
+		{BYTECODE::DIVIDE, "DIVIDE"},
+		{BYTECODE::INCREMENT, "INCREMENT"},
+		{BYTECODE::DECREMENT, "DECREMENT"},
+		{BYTECODE::AND, "AND"},
+		{BYTECODE::OR, "OR"},
+		{BYTECODE::XOR, "XOR"},
+		{BYTECODE::NOT, "NOT"},
+		{BYTECODE::SHIFTLEFT, "SHIFTLEFT"},
+		{BYTECODE::SHIFTRIGHT, "SHIFTRIGHT"},
+		{BYTECODE::REG_0, "REG_0"},
+		{BYTECODE::REG_1, "REG_1"},
+		{BYTECODE::REG_2, "REG_2"},
+		{BYTECODE::REG_3, "REG_3"},
+		{BYTECODE::REG_4, "REG_4"},
+		{BYTECODE::REG_5, "REG_5"},
+		{BYTECODE::REG_6, "REG_6"},
+		{BYTECODE::REG_7, "REG_7"},
+		{BYTECODE::REG_PC, "REG_PC"},
+		{BYTECODE::REG_FLAGS, "REG_FLAGS"},
+	};
+};
 #endif
