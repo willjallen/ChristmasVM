@@ -47,39 +47,39 @@ enum class BYTECODE : uint8_t
 
     // MOVELR <literal> <regA> -> []
     // Moves a literal into register A
-    MOVLR,
+    MOVELR,
 
     // MOVERR <regA> <regB> -> []
     // Moves the contents of register A into register B
-    MOVRR,
+    MOVERR,
 
     // MOVELR <literal> <addr> -> []
     // Moves a literal into memory
-    MOVLM,
+    MOVELM,
 
     // MOVERM <regA> <addr> -> []
     // Moves the contents of register A into memory
-    MOVRM,
+    MOVERM,
 
     // MOVEMR <addr> <regA> -> []
     // Moves the contents of memory into register A
-    MOVEMR,
+    MOVEEMR,
 
     /* INDIRECT MOVING */
 
-    // MMOVERR <regA> <regB> -> []
+    // MOVERR <regA> <regB> -> []
     // Moves the contents of memory at the address inside register A to register B
-    MOVLIR,
+    MOVELIR,
 
-    // MMOVERR <regA> <regB> -> []
+    // MOVERR <regA> <regB> -> []
     // Moves the contents of memory at the address inside register A to register B
-    MOVIRR,
+    MOVEIRR,
 
-    // MMOVERM <regA> <addr> -> []
+    // MOVERM <regA> <addr> -> []
     // Moves the contents of memory at the address inside register A to memory
-    MOVIRM,
+    MOVEIRM,
 
-    // MMOVEMR <addr> <regA> -> []
+    // MOVEMR <addr> <regA> -> []
     // Moves contents of memory at the address inside memory to register A
     MOVEIMR,
 
@@ -187,15 +187,15 @@ namespace BYTECODE_INFO
         {"JUMPGT", {BYTECODE::JUMPGT, "JUMPGT", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPLTE", {BYTECODE::JUMPLTE, "JUMPLTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
         {"JUMPGTE", {BYTECODE::JUMPGTE, "JUMPGTE", true, false, {ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVRR", {BYTECODE::MOVRR, "MOVRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVRM", {BYTECODE::MOVRM, "MOVRM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVEMR", {BYTECODE::MOVEMR, "MOVEMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVLR", {BYTECODE::MOVLR, "MOVLR", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVLM", {BYTECODE::MOVLM, "MOVLM", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVLIR", {BYTECODE::MOVLIR, "MOVLIR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVIRR", {BYTECODE::MOVIRR, "MOVIRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
-        {"MOVIRM", {BYTECODE::MOVIRM, "MOVIRM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
-        {"MOVEIMR", {BYTECODE::MOVEIMR, "MOVEIMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVERR", {BYTECODE::MOVERR, "MOVERR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVERM", {BYTECODE::MOVERM, "MOVERM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
+        {"MOVEEMR", {BYTECODE::MOVEEMR, "MOVEEMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVELR", {BYTECODE::MOVELR, "MOVELR", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVELM", {BYTECODE::MOVELM, "MOVELM", true, false, {ARGUMENT_TYPE::LITERAL, ARGUMENT_TYPE::ADDRESS}}},
+        {"MOVELIR", {BYTECODE::MOVELIR, "MOVELIR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVEIRR", {BYTECODE::MOVEIRR, "MOVEIRR", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
+        {"MOVEIRM", {BYTECODE::MOVEIRM, "MOVEIRM", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::ADDRESS}}},
+        {"MOVEIMR", {BYTECODE::MOVEIMR, "MOVEEIMR", true, false, {ARGUMENT_TYPE::ADDRESS, ARGUMENT_TYPE::REGISTER}}},
         {"ADD", {BYTECODE::ADD, "ADD", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"SUBTRACT", {BYTECODE::SUBTRACT, "SUBTRACT", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
         {"MULTIPLY", {BYTECODE::MULTIPLY, "MULTIPLY", true, false, {ARGUMENT_TYPE::REGISTER, ARGUMENT_TYPE::REGISTER}}},
@@ -228,14 +228,14 @@ namespace BYTECODE_INFO
         {BYTECODE::JUMPGT, "JUMPGT"},
         {BYTECODE::JUMPLTE, "JUMPLTE"},
         {BYTECODE::JUMPGTE, "JUMPGTE"},
-        {BYTECODE::MOVLR, "MOVLR"},
-        {BYTECODE::MOVRR, "MOVRR"},
-        {BYTECODE::MOVLM, "MOVLM"},
-        {BYTECODE::MOVRM, "MOVRM"},
-        {BYTECODE::MOVEMR, "MOVEMR"},
-        {BYTECODE::MOVLIR, "MOVLIR"},
-        {BYTECODE::MOVIRR, "MOVIRR"},
-        {BYTECODE::MOVIRM, "MOVIRM"},
+        {BYTECODE::MOVELR, "MOVELR"},
+        {BYTECODE::MOVERR, "MOVERR"},
+        {BYTECODE::MOVELM, "MOVELM"},
+        {BYTECODE::MOVERM, "MOVERM"},
+        {BYTECODE::MOVEEMR, "MOVEEMR"},
+        {BYTECODE::MOVELIR, "MOVELIR"},
+        {BYTECODE::MOVEIRR, "MOVEIRR"},
+        {BYTECODE::MOVEIRM, "MOVEIRM"},
         {BYTECODE::MOVEIMR, "MOVEIMR"},
         {BYTECODE::ADD, "ADD"},
         {BYTECODE::SUBTRACT, "SUBTRACT"},

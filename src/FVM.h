@@ -27,6 +27,9 @@ class FVM{
 		uint8_t readUInt8(size_t address);
 		uint16_t readUInt16(size_t address);
 
+		void writeUInt8(size_t address, uint8_t value);
+		void writeUInt16(size_t address, uint16_t value);
+
 		uint16_t getAddressArgument(size_t PCOffsetBytes);
 		uint16_t getLiteralArgument(size_t PCOffsetBytes);
 

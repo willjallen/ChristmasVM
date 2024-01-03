@@ -8,14 +8,18 @@
 #include "ResultCode.h"
 #include "ByteCode.h"
 
+/**
+ * Constructor for the FVM class.
+ * Initializes the FVM with a specified memory size.
+ * @param MEMORY_SIZE The size of the memory for the FVM.
+ */
 FVM::FVM(size_t MEMORY_SIZE) : MEMORY_SIZE(MEMORY_SIZE){
-
-
 }
 
 /**
- * Initializes the VM. Sets up memory and registers
- * @returns RESULT_CODE The result of the operation.
+ * Initializes the virtual machine (VM).
+ * Sets up the memory and registers to their initial state.
+ * @return RESULT_CODE The result of the initialization operation, indicating success or failure.
  */
 RESULT FVM::init(){
 	/* Initialize the VM */
@@ -37,7 +41,11 @@ RESULT FVM::init(){
 	return RESULT_CODE::SUCCESS;
 }
 
-
+/**
+ * Retrieves a reference to a register based on the provided bytecode.
+ * @param bytecode The bytecode enum indicating the register to access.
+ * @return Reference to the selected register.
+ */
 uint16_t& FVM::getRegister(enum BYTECODE bytecode){
 	switch(bytecode){
 		default:				   return REG_0;
@@ -53,10 +61,21 @@ uint16_t& FVM::getRegister(enum BYTECODE bytecode){
 	}
 }
 
+/**
+ * Reads an 8-bit unsigned integer from the specified memory address.
+ * @param address The memory address from which to read.
+ * @return The 8-bit unsigned integer value read from memory.
+ */
 uint8_t FVM::readUInt8(size_t address){
 	return static_cast<uint8_t>(memory.at(address));
 }
 
+/**
+ * Reads a 16-bit unsigned integer from the specified memory address.
+ * Assumes a little endian memory model.
+ * @param address The memory address from which to read.
+ * @return The 16-bit unsigned integer value read from memory.
+ */
 uint16_t FVM::readUInt16(size_t address){
 	uint8_t lowByte = readUInt8(address);
 	uint8_t highByte = readUInt8(address+1);
@@ -64,21 +83,60 @@ uint16_t FVM::readUInt16(size_t address){
 	return static_cast<uint16_t>(lowByte | highByte << 8);
 }
 
+/**
+ * Writes an 8-bit unsigned integer to the specified memory address.
+ * @param address The memory address to write to.
+ * @param value The 8-bit unsigned integer value to write.
+ */
+void FVM::writeUInt8(size_t address, uint8_t value){
+	memory.at(address) = value;
+}
+
+/**
+ * Writes a 16-bit unsigned integer to the specified memory address.
+ * Assumes a little endian memory model.
+ * @param address The memory address to write to.
+ * @param value The 16-bit unsigned integer value to write.
+ */
+void FVM::writeUInt16(size_t address, uint16_t value){
+	uint8_t lowByte = value & 0xFF;
+	uint8_t highByte = value >> 8;
+	memory.at(address) = lowByte;
+	memory.at(address + 1) = highByte;
+}
+
+/**
+ * Binds a register reference to a specified register based on the program counter offset.
+ * @param regRef The reference to the register to bind.
+ * @param PCOffsetBytes The offset from the program counter to determine the register.
+ */
 void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes){
 	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + 0xff * PCOffsetBytes + 1])));
 }
 
+/**
+ * Retrieves a 16-bit address argument from memory based on the program counter offset.
+ * @param PCOffsetBytes The offset from the program counter.
+ * @return The 16-bit address value retrieved from memory.
+ */
 uint16_t FVM::getAddressArgument(size_t PCOffsetBytes){
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
+/**
+ * Retrieves a 16-bit literal argument from memory based on the program counter offset.
+ * @param PCOffsetBytes The offset from the program counter.
+ * @return The 16-bit literal value retrieved from memory.
+ */
 uint16_t FVM::getLiteralArgument(size_t PCOffsetBytes){
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
-/*
- * Runs the VM. Executes each bytecode in sequence.
- * @returns RESULT_CODE The result of the operation.
+
+/**
+ * Runs the virtual machine, executing each bytecode in sequence.
+ * @param bytecode The vector of bytecodes to be executed.
+ * @return RESULT_CODE The result of the execution, indicating success or failure.
  */
 RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 	
@@ -133,7 +191,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					}else if(regA >= regB){
 						REG_FLAGS = REG_FLAGS | FLAG::GTE;
 					}
-					
+
 					REG_PC += 0xff * 3 + 1;
 					break;
 				}
@@ -202,17 +260,52 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					break;
 				}
 				
+			/* MOVING */
 
 			// MOVELR <literal> <regA> -> []
 			// Moves a literal into register A
-				case(BYTECODE::MOVLR):
-					{
-						uint16_t literal = getLiteralArgument(1);
-						bindReg(regARef, 2);
-						auto& regA = regARef.get();
-						regA = literal;
-						break;
-					}
+			case(BYTECODE::MOVELR):
+				{
+					uint16_t literal = getLiteralArgument(1);
+					bindReg(regARef, 2);
+					auto& regA = regARef.get();
+					regA = literal;
+
+					REG_PC += 0xff * 4 + 1;
+
+					break;
+				}
+			
+			// MOVERR <regA> <regB> -> []
+			// Moves the contents of register A into register B
+			case(BYTECODE::MOVERR):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+					auto& regA = regARef.get();
+					auto& regB = regARef.get();
+
+					regB = regA;
+
+					REG_PC += 0xff * 3 + 1;
+
+					break;
+				}
+			
+			// MOVELR <literal> <addr> -> []
+			// Moves a literal into memory
+			case(BYTECODE::MOVELM):
+				{
+					uint16_t literal = getLiteralArgument(1);
+					uint16_t address = getAddressArgument(2);
+					writeUInt16(address, literal);
+
+					REG_PC += 0xff * 4 + 1;
+
+					break;
+				}
+
+
 		}	
 	}
 	
