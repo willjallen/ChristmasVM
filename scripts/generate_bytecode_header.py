@@ -4,6 +4,14 @@ import os
 def indent(level):
 	return "\t" * level
 
+INFO_COMMENT = """
+/**
+ * ==== AUTO-GENERATED HEADER FILE ====
+ * SCRIPT: scripts/generated_bytecode_header.py
+ * SOURCE: src/bytecode.json
+ */
+\n\n"""
+
 DEFINITION_MACROS = """
 #ifndef BYTECODE_H
 #define BYTECODE_H
@@ -108,7 +116,7 @@ def generate_bytecode_info_namespace(bytecode_dict):
 	bytecode_info_namespace += generate_object_from_name_map(bytecode_dict)
 	bytecode_info_namespace += generate_name_from_value_map(bytecode_dict)
  
-	bytecode_info_namespace += "};"
+	bytecode_info_namespace += "}"
  
 	return bytecode_info_namespace
  
@@ -117,6 +125,7 @@ def generate_bytecode_info_namespace(bytecode_dict):
 
 def generate_header(bytecode_dict):
 	header_str = ""
+	header_str += INFO_COMMENT
 	header_str += DEFINITION_MACROS
 	header_str += HEADER_FILES
 	

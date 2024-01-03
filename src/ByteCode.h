@@ -1,4 +1,12 @@
 
+/**
+ * ==== AUTO-GENERATED HEADER FILE ====
+ * SCRIPT: scripts/generated_bytecode_header.py
+ * SOURCE: src/bytecode.json
+ */
+
+
+
 #ifndef BYTECODE_H
 #define BYTECODE_H
 
@@ -267,5 +275,5 @@ namespace BYTECODE_INFO {
 		{BYTECODE::REG_PC, "REG_PC"},
 		{BYTECODE::REG_FLAGS, "REG_FLAGS"},
 	};
-};
+}
 #endif
