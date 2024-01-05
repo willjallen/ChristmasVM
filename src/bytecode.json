@@ -61,14 +61,14 @@
       "comments": ["Moves the contents of register A into memory", "MOVERM <regA> <addr> -> []"]
     },
     {
-      "name": "MOVEEMR",
+      "name": "MOVEMR",
       "args": ["ADDRESS", "REGISTER"],
-      "comments": ["Moves the contents of memory into register A", "MOVEEMR <addr> <regA> -> []"]
+      "comments": ["Moves the contents of memory into register A", "MOVEMR <addr> <regA> -> []"]
     },
     {
       "name": "MOVELIR",
-      "args": ["REGISTER", "REGISTER"],
-      "comments": ["Moves the contents of memory at the address inside register A to register B", "MOVELIR <regA> <regB> -> []"]
+      "args": ["LITERAL", "REGISTER"],
+      "comments": ["Moves a literal into memory at the address inside register A", "MOVELIR <literal> <regA> -> []"]
     },
     {
       "name": "MOVEIRR",

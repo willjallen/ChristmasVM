@@ -305,6 +305,55 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					break;
 				}
 
+			// Moves the contents of register A into memory
+			// MOVERM <regA> <addr> -> []
+			case(BYTECODE::MOVERM):
+				{
+					bindReg(regARef, 1);
+					auto& regA = regARef.get();
+
+					uint16_t address = getAddressArgument(2);
+
+					writeUInt16(address, regA);
+				}
+
+			// Moves the contents of memory into register A
+			// MOVEMR <addr> <regA> -> []
+			case(BYTECODE::MOVEMR):
+				{
+					uint16_t address = getAddressArgument(1);
+
+					bindReg(regARef, 2);
+					auto& regA = regARef.get();
+
+					regA = readUInt16(address);
+				}
+
+			// Moves a literal into memory at the address inside register A
+			// MOVELIR <literal> <regA> -> []
+			case(BYTECODE::MOVELIR):
+				{
+					uint16_t literal = getLiteralArgument(1);
+
+					bindReg(regARef, 2);
+					auto& address = regARef.get();
+
+					writeUInt16(address, literal);
+				}
+
+			// Moves the contents of memory at the address inside register A to register B
+			// MOVEIRR <regA> <regB> -> []
+			case(BYTECODE::MOVEIRR):
+				{
+					
+				}
+
+
+
+
+
+
+
 
 		}	
 	}
