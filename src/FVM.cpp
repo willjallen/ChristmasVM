@@ -315,6 +315,11 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					uint16_t address = getAddressArgument(2);
 
 					writeUInt16(address, regA);
+
+					REG_PC += 0xff * 4 + 1;
+
+					break;
+
 				}
 
 			// Moves the contents of memory into register A
@@ -327,6 +332,10 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					auto& regA = regARef.get();
 
 					regA = readUInt16(address);
+
+					REG_PC += 0xff * 4 + 1;
+					
+					break;
 				}
 
 			// Moves a literal into memory at the address inside register A
@@ -339,6 +348,11 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					auto& address = regARef.get();
 
 					writeUInt16(address, literal);
+
+					REG_PC += 0xff * 4 + 1;
+					
+					break;
+
 				}
 
 			// Moves the contents of memory at the address inside register A to register B
@@ -348,8 +362,15 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					bindReg(regARef, 1);
 					bindReg(regBRef, 2);
 
-					auto& regA = regARef.get();
+					auto& address = regARef.get();
 					auto& regB = regBRef.get();	
+
+					uint16_t contents = readUInt16(address);
+					regB = contents;
+  
+					REG_PC += 0xff * 3 + 1;
+					
+					break;
 				}
 
 			// Moves the contents of memory at the address inside register A to memory
@@ -361,13 +382,229 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					uint16_t contents = readUInt16(address);
 					writeUInt16(address, contents);
+
+					REG_PC += 0xff * 4 + 1;
+					
+					break;
 				}
 
 
+			// Moves contents of memory at the address inside memory to register A
+			// MOVEIMR <addr> <regA> -> []
+			case(BYTECODE::MOVEIMR):
+				{
+					uint16_t address = getAddressArgument(1);
 
+					bindReg(regARef, 2);
+					auto& regA = regARef.get();
 
+					uint16_t contents = readUInt16(address);
 
+					regA = contents;
 
+					REG_PC += 0xff * 4 + 1;
+					
+					break;
+
+				}
+
+			// RegisterA + RegisterB -> RegisterB
+			// ADD <regA> <regB> -> [regB]
+			case(BYTECODE::ADD):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA + regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA - RegisterB -> RegisterB
+			// SUBTRACT <regA> <regB> -> [regB]
+			case(BYTECODE::SUBTRACT):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA - regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA * RegisterB -> RegisterB
+			// MULTIPLY <regA> <regB> -> [regB]
+			case(BYTECODE::MULTIPLY):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA * regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA / RegisterB -> RegisterB
+			// DIVIDE <regA> <regB> -> [regB]
+			case(BYTECODE::DIVIDE):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA / regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA + 1 -> RegisterA
+			// INCREMENT <regA> -> [regA]
+			case(BYTECODE::INCREMENT):
+				{
+					bindReg(regARef, 1);
+
+					auto& regA = regARef.get();
+
+					regA += 1;
+
+					REG_PC = 0xff * 2 + 1;
+
+					break;
+				}
+
+			// RegisterA - 1 -> RegisterA
+			// DECREMENT <regA> -> [regA]
+			case(BYTECODE::DECREMENT):
+				{
+					bindReg(regARef, 1);
+
+					auto& regA = regARef.get();
+
+					regA -= 1;
+
+					REG_PC = 0xff * 2 + 1;
+
+					break;
+				}
+
+			// RegisterA AND RegisterB -> RegisterB
+			// AND <regA> <regB> -> [regB]
+			case(BYTECODE::AND):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA & regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA OR RegisterB -> RegisterB
+			// OR <regA> <regB> -> [regB]
+			case(BYTECODE::OR):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA | regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA XOR RegisterB -> RegisterB
+			// XOR <regA> <regB> -> [regB]
+			case(BYTECODE::XOR):
+				{
+					bindReg(regARef, 1);
+					bindReg(regBRef, 2);
+
+					auto& regA = regARef.get();
+					auto& regB = regBRef.get();
+
+					regB = regA ^ regB;
+
+					REG_PC = 0xff * 3 + 1;
+
+					break;
+				}
+
+			// RegisterA -> !RegisterA
+			// NOT <regA> -> [regA]
+			case(BYTECODE::NOT):
+				{
+					bindReg(regARef, 1);
+
+					auto& regA = regARef.get();
+
+					regA = ~regA;
+
+					REG_PC = 0xff * 2 + 1;
+
+					break;
+				}
+
+			// RegisterA << literal -> RegisterA
+			// SHIFTLEFT <regA> <literal> -> [regA]
+			case(BYTECODE::SHIFTLEFT):
+				{
+					bindReg(regARef, 1);
+
+					uint16_t literal = getLiteralArgument(2);
+
+					auto& regA = regARef.get();
+
+					regA = regA << literal;
+
+					REG_PC = 0xff * 4 + 1;
+
+					break;
+				}
+
+			// RegisterA - RegisterB -> RegisterB
+			// SUBTRACT <regA> <regB> -> [regB]
+			case(BYTECODE::SHIFTRIGHT):
+				{
+					bindReg(regARef, 1);
+
+					uint16_t literal = getLiteralArgument(2);
+
+					auto& regA = regARef.get();
+
+					regA = regA >> literal;
+
+					REG_PC = 0xff * 4 + 1;
+
+					break;
+				}
 
 
 		}	

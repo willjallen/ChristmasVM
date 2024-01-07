@@ -71,7 +71,7 @@ enum class BYTECODE : uint8_t {
 	MOVEMR,
 
 	// Moves a literal into memory at the address inside register A
-	// MOVELIR <literal> <regB> -> []
+	// MOVELIR <literal> <regA> -> []
 	MOVELIR,
 
 	// Moves the contents of memory at the address inside register A to register B

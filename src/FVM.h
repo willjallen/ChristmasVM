@@ -20,7 +20,8 @@ class FVM{
 		FVM(size_t MEMORY_SIZE);
 		RESULT init();
 		RESULT run(const std::vector<uint8_t>& bytecode);
-	private:
+
+	protected:
 		size_t MEMORY_SIZE;
 
 		std::vector<uint8_t> memory;
