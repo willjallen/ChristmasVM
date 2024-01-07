@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
+#include <iomanip>  // for std::setw and std::setfill
+#include <sstream> 
 
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #include "spdlog/spdlog.h"
-
 #include "FVM.h"
 #include "ResultCode.h"
 #include "ByteCode.h"
@@ -41,6 +43,41 @@ RESULT FVM::init(){
 	return RESULT_CODE::SUCCESS;
 }
 
+std::string FVM::memoryToHexString() const {
+    std::stringstream hexStream;
+    hexStream << std::hex; // Set stream to output in hex
+
+    for (const auto& elem : memory) {
+        hexStream << std::setw(2) << std::setfill('0') << static_cast<unsigned>(elem) << " ";
+    }
+
+    return hexStream.str();
+}
+
+std::string FVM::dumpState() const {
+	std::stringstream state;
+	
+	// Dump registers
+	state << "Registers:\n";
+	state << "REG_0: 0x" << std::hex << REG_0 << "\n";
+	state << "REG_1: 0x" << std::hex << REG_1 << "\n";
+	state << "REG_2: 0x" << std::hex << REG_2 << "\n";
+	state << "REG_3: 0x" << std::hex << REG_3 << "\n";
+	state << "REG_4: 0x" << std::hex << REG_4 << "\n";
+	state << "REG_5: 0x" << std::hex << REG_5 << "\n";
+	state << "REG_6: 0x" << std::hex << REG_6 << "\n";
+	state << "REG_7: 0x" << std::hex << REG_7 << "\n";
+	
+	// Dump program counter and flags
+	state << "Program Counter (PC): 0x" << std::hex << REG_PC << "\n";
+	state << "Flags: 0x" << std::hex << REG_FLAGS << "\n";
+
+	// Dump memory state
+	state << "Memory:\n" << memoryToHexString();
+
+	return state.str();
+}
+
 /**
  * Retrieves a reference to a register based on the provided bytecode.
  * @param bytecode The bytecode enum indicating the register to access.
@@ -48,7 +85,10 @@ RESULT FVM::init(){
  */
 uint16_t& FVM::getRegister(const enum BYTECODE bytecode) {
 	switch(bytecode){
-		default:				   return REG_0;
+		default:
+			{
+				SPDLOG_ERROR("Expected Register, got: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(bytecode));
+			}
 		case BYTECODE::REG_0:      return REG_0;
 		case BYTECODE::REG_1:      return REG_1;
 		case BYTECODE::REG_2:      return REG_2;
@@ -67,7 +107,7 @@ uint16_t& FVM::getRegister(const enum BYTECODE bytecode) {
  * @return The 8-bit unsigned integer value read from memory.
  */
 uint8_t FVM::readUInt8(const size_t address) const {
-	return static_cast<uint8_t>(memory.at(address));
+	return static_cast<uint8_t>(memory[address]);
 }
 
 /**
@@ -89,7 +129,7 @@ uint16_t FVM::readUInt16(const size_t address) const {
  * @param value The 8-bit unsigned integer value to write.
  */
 void FVM::writeUInt8(const size_t address, const uint8_t value){
-	memory.at(address) = value;
+	memory[address] = value;
 }
 
 /**
@@ -101,8 +141,8 @@ void FVM::writeUInt8(const size_t address, const uint8_t value){
 void FVM::writeUInt16(const size_t address, const uint16_t value){
 	uint8_t lowByte = value & 0xFF;
 	uint8_t highByte = value >> 8;
-	memory.at(address) = lowByte;
-	memory.at(address + 1) = highByte;
+	memory[address] = lowByte;
+	memory[address + 1] = highByte;
 }
 
 /**
@@ -111,7 +151,7 @@ void FVM::writeUInt16(const size_t address, const uint16_t value){
  * @param PCOffsetBytes The offset from the program counter to determine the register.
  */
 void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffsetBytes){
-	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + 0xff * PCOffsetBytes + 1])));
+	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + PCOffsetBytes])));
 }
 
 /**
@@ -120,7 +160,7 @@ void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffse
  * @return The 16-bit address value retrieved from memory.
  */
 uint16_t FVM::getAddressArgument(const size_t PCOffsetBytes) const {
-	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
+	return readUInt16(REG_PC + PCOffsetBytes);
 }
 
 /**
@@ -129,7 +169,7 @@ uint16_t FVM::getAddressArgument(const size_t PCOffsetBytes) const {
  * @return The 16-bit literal value retrieved from memory.
  */
 uint16_t FVM::getLiteralArgument(const size_t PCOffsetBytes) const {
-	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
+	return readUInt16(REG_PC + PCOffsetBytes);
 }
 
 
@@ -141,14 +181,17 @@ uint16_t FVM::getLiteralArgument(const size_t PCOffsetBytes) const {
 RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 	
 	/* Load the bytecode into memory */
-	spdlog::info("Loading bytecode into memory");
+	SPDLOG_INFO("Loading bytecode into memory");
 
 	if(bytecode.size() > MEMORY_SIZE){
-		spdlog::error("Bytecode is too large");	
+		SPDLOG_ERROR("Bytecode is too large");	
 		return RESULT_CODE::OUT_OF_MEMORY;
 	}
 
 	std::copy(bytecode.begin(), bytecode.end(), memory.data());
+	
+	SPDLOG_DEBUG("Loaded memory: {}", memoryToHexString());
+
 	
 	/* Set Vars */
 
@@ -156,15 +199,21 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 	std::reference_wrapper<uint16_t> regBRef = REG_0;
 
 	/* Begin Execution */
-	BYTECODE currInstruction = static_cast<BYTECODE>(memory[REG_PC]);
-	while(currInstruction != BYTECODE::HALT){
+	BYTECODE currInstruction;
+	while(true){
+		currInstruction = static_cast<BYTECODE>(memory[REG_PC]);
+		SPDLOG_DEBUG("Current instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
 		switch(currInstruction){
 			default:
 				{
-					spdlog::error("Unimplemented instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
+					SPDLOG_ERROR("Unimplemented instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
 					return RESULT_CODE::UNIMPLEMENTED_INSTRUCTION;
 				}
 
+			case(BYTECODE::HALT):
+				{
+					return RESULT_CODE::SUCCESS;
+				}
 
 			// COMPARE <regA> <regB> -> [REG_FLAGS]
 			// Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and = 
@@ -192,7 +241,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 						REG_FLAGS = REG_FLAGS | FLAG::GTE;
 					}
 
-					REG_PC += 0xff * 3 + 1;
+					REG_PC += 3;
 					break;
 				}
 
@@ -267,11 +316,11 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 			case(BYTECODE::MOVELR):
 				{
 					uint16_t literal = getLiteralArgument(1);
-					bindReg(regARef, 2);
+					bindReg(regARef, 3);
 					auto& regA = regARef.get();
 					regA = literal;
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 
 					break;
 				}
@@ -287,7 +336,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA;
 
-					REG_PC += 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -297,10 +346,10 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 			case(BYTECODE::MOVELM):
 				{
 					uint16_t literal = getLiteralArgument(1);
-					uint16_t address = getAddressArgument(2);
+					uint16_t address = getAddressArgument(3);
 					writeUInt16(address, literal);
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 
 					break;
 				}
@@ -316,7 +365,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					writeUInt16(address, regA);
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 
 					break;
 
@@ -328,12 +377,12 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 				{
 					uint16_t address = getAddressArgument(1);
 
-					bindReg(regARef, 2);
+					bindReg(regARef, 3);
 					auto& regA = regARef.get();
 
 					regA = readUInt16(address);
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 					
 					break;
 				}
@@ -344,12 +393,12 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 				{
 					uint16_t literal = getLiteralArgument(1);
 
-					bindReg(regARef, 2);
+					bindReg(regARef, 3);
 					auto& address = regARef.get();
 
 					writeUInt16(address, literal);
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 					
 					break;
 
@@ -368,7 +417,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					uint16_t contents = readUInt16(address);
 					regB = contents;
   
-					REG_PC += 0xff * 3 + 1;
+					REG_PC += 3;
 					
 					break;
 				}
@@ -383,7 +432,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 					uint16_t contents = readUInt16(address);
 					writeUInt16(address, contents);
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 					
 					break;
 				}
@@ -395,14 +444,14 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 				{
 					uint16_t address = getAddressArgument(1);
 
-					bindReg(regARef, 2);
+					bindReg(regARef, 3);
 					auto& regA = regARef.get();
 
 					uint16_t contents = readUInt16(address);
 
 					regA = contents;
 
-					REG_PC += 0xff * 4 + 1;
+					REG_PC += 4;
 					
 					break;
 
@@ -420,7 +469,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA + regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -437,7 +486,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA - regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -454,7 +503,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA * regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -471,7 +520,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA / regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -486,7 +535,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regA += 1;
 
-					REG_PC = 0xff * 2 + 1;
+					REG_PC += 2;
 
 					break;
 				}
@@ -501,7 +550,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regA -= 1;
 
-					REG_PC = 0xff * 2 + 1;
+					REG_PC += 2;
 
 					break;
 				}
@@ -518,7 +567,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA & regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -535,7 +584,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA | regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -552,7 +601,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regB = regA ^ regB;
 
-					REG_PC = 0xff * 3 + 1;
+					REG_PC += 3;
 
 					break;
 				}
@@ -567,7 +616,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regA = ~regA;
 
-					REG_PC = 0xff * 2 + 1;
+					REG_PC += 2;
 
 					break;
 				}
@@ -584,13 +633,13 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regA = regA << literal;
 
-					REG_PC = 0xff * 4 + 1;
+					REG_PC += 4;
 
 					break;
 				}
 
-			// RegisterA - RegisterB -> RegisterB
-			// SUBTRACT <regA> <regB> -> [regB]
+			// RegisterA >> literal  -> RegisterA
+			// SHIFTRIGHT <regA> <literal> -> [regA]
 			case(BYTECODE::SHIFTRIGHT):
 				{
 					bindReg(regARef, 1);
@@ -601,7 +650,7 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 
 					regA = regA >> literal;
 
-					REG_PC = 0xff * 4 + 1;
+					REG_PC += 4;
 
 					break;
 				}

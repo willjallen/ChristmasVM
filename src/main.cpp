@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <filesystem>
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 
 #include "spdlog/spdlog.h"
 
@@ -87,13 +88,13 @@ RESULT run(int argc, char** argv){
 	
 
 	if(compile_funlang){
-		spdlog::info("Compiling funlang file: " + programPath.filename().string());	
+		SPDLOG_INFO("Compiling funlang file: " + programPath.filename().string());	
 		Lexer lexer = Lexer(programPath);
 		lexer.tokenize();	
 	}
 
 	if(compile_funasm){
-		spdlog::info("Compiling funasm file: " + programPath.filename().string());	
+		SPDLOG_INFO("Compiling funasm file: " + programPath.filename().string());	
 		Compiler compiler;
 		compiler.compileFunasmToBytecode(programPath);
 	
@@ -118,7 +119,7 @@ int main(int argc, char** argv){
 	if(result.value == 1){
 		return 0;
 	}else if(result.name != "CLI_ERROR"){
-		spdlog::error("Error: " + result.name);
+		SPDLOG_ERROR("Error: " + result.name);
 		return 0;
 	}else{
 		// Don't print an error message on a CLI failure
