@@ -46,7 +46,7 @@ RESULT FVM::init(){
  * @param bytecode The bytecode enum indicating the register to access.
  * @return Reference to the selected register.
  */
-uint16_t& FVM::getRegister(enum BYTECODE bytecode){
+uint16_t& FVM::getRegister(const enum BYTECODE bytecode) {
 	switch(bytecode){
 		default:				   return REG_0;
 		case BYTECODE::REG_0:      return REG_0;
@@ -66,7 +66,7 @@ uint16_t& FVM::getRegister(enum BYTECODE bytecode){
  * @param address The memory address from which to read.
  * @return The 8-bit unsigned integer value read from memory.
  */
-uint8_t FVM::readUInt8(size_t address){
+uint8_t FVM::readUInt8(const size_t address) const {
 	return static_cast<uint8_t>(memory.at(address));
 }
 
@@ -76,7 +76,7 @@ uint8_t FVM::readUInt8(size_t address){
  * @param address The memory address from which to read.
  * @return The 16-bit unsigned integer value read from memory.
  */
-uint16_t FVM::readUInt16(size_t address){
+uint16_t FVM::readUInt16(const size_t address) const {
 	uint8_t lowByte = readUInt8(address);
 	uint8_t highByte = readUInt8(address+1);
 	// Little endian
@@ -88,7 +88,7 @@ uint16_t FVM::readUInt16(size_t address){
  * @param address The memory address to write to.
  * @param value The 8-bit unsigned integer value to write.
  */
-void FVM::writeUInt8(size_t address, uint8_t value){
+void FVM::writeUInt8(const size_t address, const uint8_t value){
 	memory.at(address) = value;
 }
 
@@ -98,7 +98,7 @@ void FVM::writeUInt8(size_t address, uint8_t value){
  * @param address The memory address to write to.
  * @param value The 16-bit unsigned integer value to write.
  */
-void FVM::writeUInt16(size_t address, uint16_t value){
+void FVM::writeUInt16(const size_t address, const uint16_t value){
 	uint8_t lowByte = value & 0xFF;
 	uint8_t highByte = value >> 8;
 	memory.at(address) = lowByte;
@@ -110,7 +110,7 @@ void FVM::writeUInt16(size_t address, uint16_t value){
  * @param regRef The reference to the register to bind.
  * @param PCOffsetBytes The offset from the program counter to determine the register.
  */
-void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes){
+void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffsetBytes){
 	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + 0xff * PCOffsetBytes + 1])));
 }
 
@@ -119,7 +119,7 @@ void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes
  * @param PCOffsetBytes The offset from the program counter.
  * @return The 16-bit address value retrieved from memory.
  */
-uint16_t FVM::getAddressArgument(size_t PCOffsetBytes){
+uint16_t FVM::getAddressArgument(const size_t PCOffsetBytes) const {
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 
@@ -128,7 +128,7 @@ uint16_t FVM::getAddressArgument(size_t PCOffsetBytes){
  * @param PCOffsetBytes The offset from the program counter.
  * @return The 16-bit literal value retrieved from memory.
  */
-uint16_t FVM::getLiteralArgument(size_t PCOffsetBytes){
+uint16_t FVM::getLiteralArgument(const size_t PCOffsetBytes) const {
 	return readUInt16(REG_PC + 0xff * PCOffsetBytes + 1);
 }
 

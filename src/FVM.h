@@ -17,7 +17,7 @@ class FVM{
 			GTE
 		};
 
-		FVM(size_t MEMORY_SIZE);
+		FVM(const size_t MEMORY_SIZE);
 		RESULT init();
 		RESULT run(const std::vector<uint8_t>& bytecode);
 
@@ -25,14 +25,14 @@ class FVM{
 		size_t MEMORY_SIZE;
 
 		std::vector<uint8_t> memory;
-		uint8_t readUInt8(size_t address);
-		uint16_t readUInt16(size_t address);
+		uint8_t readUInt8(const size_t address) const;
+		uint16_t readUInt16(const size_t address) const;
 
-		void writeUInt8(size_t address, uint8_t value);
-		void writeUInt16(size_t address, uint16_t value);
+		void writeUInt8(const size_t address, const uint8_t value);
+		void writeUInt16(const size_t address, const uint16_t value);
 
-		uint16_t getAddressArgument(size_t PCOffsetBytes);
-		uint16_t getLiteralArgument(size_t PCOffsetBytes);
+		uint16_t getAddressArgument(const size_t PCOffsetBytes) const;
+		uint16_t getLiteralArgument(const size_t PCOffsetBytes) const;
 
 		uint16_t REG_0;
 		uint16_t REG_1;
@@ -46,7 +46,7 @@ class FVM{
 		uint16_t REG_PC;
 		uint16_t REG_FLAGS;
 
-		uint16_t& getRegister(enum BYTECODE bytecode);
-		void bindReg(std::reference_wrapper<uint16_t>& regRef, size_t PCOffsetBytes);
+		uint16_t& getRegister(const enum BYTECODE bytecode);
+		void bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffsetBytes);
 
 };
