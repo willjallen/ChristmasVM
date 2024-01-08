@@ -15,7 +15,6 @@ tags
 *.un~
 
 # IDE/Editor Configurations
-.vscode/
 .idea/
 *.sublime-workspace
 *.sublime-project
