@@ -12,16 +12,19 @@ class FVM{
 
 	public:
 		enum FLAG : uint16_t  {
-			EQ = 0x0,
-			LT,
-			LTE,
-			GT,
-			GTE
+			EQ = 0x01,
+			LT = 0x02,
+			LTE = 0x04,
+			GT = 0x08,
+			GTE = 0x10,
+			HLT = 0x20,
 		};
 
 		FVM(const size_t MEMORY_SIZE);
 		RESULT init();
-		RESULT run(const std::vector<uint8_t>& bytecode);
+		RESULT loadBytecode(const size_t offset, const std::vector<uint8_t>& bytecode);
+		RESULT step();
+		RESULT run();
 
 
 		size_t MEMORY_SIZE;
@@ -43,16 +46,23 @@ class FVM{
 		uint8_t readUInt8(const size_t address) const;
 		uint16_t readUInt16(const size_t address) const;
 		
-		uint16_t getAddressArgument(const size_t PCOffsetBytes) const;
-		uint16_t getLiteralArgument(const size_t PCOffsetBytes) const;
+		uint16_t getAddressArgument(const size_t PCOffset) const;
+		uint16_t getLiteralArgument(const size_t PCOffset) const;
 	
 		void writeUInt8(const size_t address, const uint8_t value);
 		void writeUInt16(const size_t address, const uint16_t value);
 		
 		uint16_t& getRegister(const enum BYTECODE bytecode);
 	
-		void bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffsetBytes);
 
 		std::string memoryToHexString() const;
+		std::string dumpState() const;
+
+	private:
+		void bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffset);
+
+		std::reference_wrapper<uint16_t> regARef = REG_0;
+		std::reference_wrapper<uint16_t> regBRef = REG_0;
+
 };
 

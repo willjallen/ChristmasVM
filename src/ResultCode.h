@@ -8,7 +8,17 @@ struct RESULT {
 	RESULT(int value, std::string name) : value(value), name(name) {}
 	int value;
 	std::string name;
+
+	bool operator==(const RESULT& other){
+		return this->value == other.value;
+	}
+
+	bool operator!=(const RESULT& other){
+		return this->value != other.value;
+	}
+
 };
+
 
 
 namespace RESULT_CODE{
@@ -19,6 +29,7 @@ namespace RESULT_CODE{
 	const RESULT FILE_NOT_FOUND = RESULT(4, "FILE_NOT_FOUND");
 	const RESULT INCORRECT_NUM_ARGS = RESULT(5, "INCORRECT_NUM_ARGS");
 	const RESULT UNIMPLEMENTED_INSTRUCTION = RESULT(6, "UNIMPLEMENTED_INSTRUCTION");
+	const RESULT BAD_OFFSET = RESULT(7, "BAD_OFFSET");
 
 }
 

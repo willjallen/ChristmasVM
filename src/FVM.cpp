@@ -3,6 +3,7 @@
 #include <functional>
 #include <iomanip>  // for std::setw and std::setfill
 #include <sstream> 
+#include <format>
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #include "spdlog/spdlog.h"
@@ -148,39 +149,37 @@ void FVM::writeUInt16(const size_t address, const uint16_t value){
 /**
  * Binds a register reference to a specified register based on the program counter offset.
  * @param regRef The reference to the register to bind.
- * @param PCOffsetBytes The offset from the program counter to determine the register.
+ * @param PCOffset The offset from the program counter to determine the register.
  */
-void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffsetBytes){
-	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + PCOffsetBytes])));
+void FVM::bindReg(std::reference_wrapper<uint16_t>& regRef, const size_t PCOffset){
+	regRef = std::ref(getRegister(static_cast<BYTECODE>(memory[REG_PC + PCOffset])));
 }
 
 /**
  * Retrieves a 16-bit address argument from memory based on the program counter offset.
- * @param PCOffsetBytes The offset from the program counter.
+ * @param PCOffset The offset from the program counter.
  * @return The 16-bit address value retrieved from memory.
  */
-uint16_t FVM::getAddressArgument(const size_t PCOffsetBytes) const {
-	return readUInt16(REG_PC + PCOffsetBytes);
+uint16_t FVM::getAddressArgument(const size_t PCOffset) const {
+	return readUInt16(REG_PC + PCOffset);
 }
 
 /**
  * Retrieves a 16-bit literal argument from memory based on the program counter offset.
- * @param PCOffsetBytes The offset from the program counter.
+ * @param PCOffset The offset from the program counter.
  * @return The 16-bit literal value retrieved from memory.
  */
-uint16_t FVM::getLiteralArgument(const size_t PCOffsetBytes) const {
-	return readUInt16(REG_PC + PCOffsetBytes);
+uint16_t FVM::getLiteralArgument(const size_t PCOffset) const {
+	return readUInt16(REG_PC + PCOffset);
 }
 
-
 /**
- * Runs the virtual machine, executing each bytecode in sequence.
- * @param bytecode The vector of bytecodes to be executed.
+ * Loads a vector of bytecode into memory.
+ * @param Offset The offset from position 0 to load the memory into
+ * @param bytecode The vector of bytecodes to be loaded.
  * @return RESULT_CODE The result of the execution, indicating success or failure.
  */
-RESULT FVM::run(const std::vector<uint8_t>& bytecode){
-	
-	/* Load the bytecode into memory */
+RESULT FVM::loadBytecode(const size_t offset, const std::vector<uint8_t>& bytecode){
 	SPDLOG_INFO("Loading bytecode into memory");
 
 	if(bytecode.size() > MEMORY_SIZE){
@@ -188,476 +187,508 @@ RESULT FVM::run(const std::vector<uint8_t>& bytecode){
 		return RESULT_CODE::OUT_OF_MEMORY;
 	}
 
-	std::copy(bytecode.begin(), bytecode.end(), memory.data());
+	if(offset >= MEMORY_SIZE - bytecode.size()){
+		SPDLOG_ERROR("Offset is too large");
+		return RESULT_CODE::BAD_OFFSET;
+	}
+
+	std::copy(bytecode.begin(), bytecode.end(), memory.data() + offset);
 	
 	SPDLOG_DEBUG("Loaded memory: {}", memoryToHexString());
 
+	return RESULT_CODE::SUCCESS;
+}
+
+/**
+ * Runs the virtual machine, executing each bytecode in sequence.
+ * @param bytecode The vector of bytecodes to be executed.
+ * @return RESULT_CODE The result of the execution, indicating success or failure.
+ */
+RESULT FVM::step(){
 	
 	/* Set Vars */
 
-	std::reference_wrapper<uint16_t> regARef = REG_0;
-	std::reference_wrapper<uint16_t> regBRef = REG_0;
+	regARef = REG_0;
+	regBRef = REG_0;
 
 	/* Begin Execution */
-	BYTECODE currInstruction;
-	while(true){
-		currInstruction = static_cast<BYTECODE>(memory[REG_PC]);
-		SPDLOG_DEBUG("Current instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
-		switch(currInstruction){
-			default:
-				{
-					SPDLOG_ERROR("Unimplemented instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
-					return RESULT_CODE::UNIMPLEMENTED_INSTRUCTION;
+	BYTECODE currInstruction = static_cast<BYTECODE>(memory[REG_PC]);
+	SPDLOG_DEBUG("Current instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
+	switch(currInstruction){
+		default:
+			{
+				SPDLOG_ERROR("Unimplemented instruction: " + BYTECODE_INFO::NAME_FROM_VALUE_MAP.at(currInstruction));
+				return RESULT_CODE::UNIMPLEMENTED_INSTRUCTION;
+			}
+
+		// HALT -> [REG_FLAGS]
+		// Sets the REG_FLAGS with a bit corresponding to HLT
+		case(BYTECODE::HALT):
+			{
+				REG_FLAGS = REG_FLAGS | FLAG::HLT;
+
+				return RESULT_CODE::SUCCESS;
+			}
+
+		// COMPARE <regA> <regB> -> [REG_FLAGS]
+		// Sets the REG_FLAGS with a bit corresponding to <, >, <=, >= and = 
+		case(BYTECODE::COMPARE):
+			{
+				// Bind regA and regB
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
+
+				// Clear the flag register
+				REG_FLAGS = REG_FLAGS & 0;	
+
+
+				if(regA == regB){
+					REG_FLAGS = REG_FLAGS | FLAG::EQ;
+				}
+				
+				if(regA < regB){
+					REG_FLAGS = REG_FLAGS | FLAG::LT;
+				}
+				
+				if(regA > regB){
+					REG_FLAGS = REG_FLAGS | FLAG::GT;
+				}
+				
+				if(regA <= regB){
+					REG_FLAGS = REG_FLAGS | FLAG::LTE;
+				} 
+				
+				if(regA >= regB){
+					REG_FLAGS = REG_FLAGS | FLAG::GTE;
 				}
 
-			case(BYTECODE::HALT):
-				{
-					return RESULT_CODE::SUCCESS;
-				}
+				REG_PC += 3;
+				break;
+			}
 
-			// COMPARE <regA> <regB> -> [REG_FLAGS]
-			// Sets the REG_FLAGS with a bitmask corresponding to <, >, <=, >= and = 
-			case(BYTECODE::COMPARE):
-				{
-					// Bind regA and regB
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+		// JUMP <addr> -> []
+		// Sets the PC to a particular address in memory
+		case(BYTECODE::JUMP):
+			{
+				uint16_t addr = getAddressArgument(1);
+				REG_PC = addr;
+				break;
+			}
 
-					// Clear the flag register
-					REG_FLAGS = REG_FLAGS & 0;	
-
-
-					if(regA == regB){
-						REG_FLAGS = REG_FLAGS | FLAG::EQ;
-					}else if(regA < regB){
-						REG_FLAGS = REG_FLAGS | FLAG::LT;
-					}else if(regA > regB){
-						REG_FLAGS = REG_FLAGS | FLAG::GT;
-					}else if(regA <= regB){
-						REG_FLAGS = REG_FLAGS | FLAG::LTE;
-					}else if(regA >= regB){
-						REG_FLAGS = REG_FLAGS | FLAG::GTE;
-					}
-
-					REG_PC += 3;
-					break;
-				}
-
-			// JUMP <addr> -> []
-			// Sets the PC to a particular address in memory
-			case(BYTECODE::JUMP):
-				{
+		// JUMPE <addr> -> []
+		// Sets the PC to a particular address in memory if EQ flag is set
+		case(BYTECODE::JUMPEQ):
+			{
+				if((REG_FLAGS & FLAG::EQ) == FLAG::EQ){
 					uint16_t addr = getAddressArgument(1);
 					REG_PC = addr;
-					break;
 				}
+				break;
+			}
 
-			// JUMPE <addr> -> []
-			// Sets the PC to a particular address in memory if EQ flag is set
-			case(BYTECODE::JUMPEQ):
-				{
-					if((REG_FLAGS & FLAG::EQ) == FLAG::EQ){
-						uint16_t addr = getAddressArgument(1);
-						REG_PC = addr;
-					}
-					break;
+		// JUMPLT <addr> -> []
+		// Sets the PC to a particular address in memory if LT flag is set
+		case(BYTECODE::JUMPLT):
+			{
+				if((REG_FLAGS & FLAG::LT) == FLAG::LT){
+					uint16_t addr = getAddressArgument(1);
+					REG_PC = addr;
 				}
+				break;
+			}
 
-			// JUMPLT <addr> -> []
-			// Sets the PC to a particular address in memory if LT flag is set
-			case(BYTECODE::JUMPLT):
-				{
-					if((REG_FLAGS & FLAG::LT) == FLAG::LT){
-						uint16_t addr = getAddressArgument(1);
-						REG_PC = addr;
-					}
-					break;
+		// JUMPGT <addr> -> []
+		// Sets the PC to a particular address in memory if GT flag is set
+		case(BYTECODE::JUMPGT):
+			{
+				if((REG_FLAGS & FLAG::GT) == FLAG::GT){
+					uint16_t addr = getAddressArgument(1);
+					REG_PC = addr;
 				}
+				break;
+			}
 
-			// JUMPGT <addr> -> []
-			// Sets the PC to a particular address in memory if GT flag is set
-			case(BYTECODE::JUMPGT):
-				{
-					if((REG_FLAGS & FLAG::GT) == FLAG::GT){
-						uint16_t addr = getAddressArgument(1);
-						REG_PC = addr;
-					}
-					break;
+		// JUMPLTE <addr> -> []
+		// Sets the PC to a particular address in memory if LTE flag is set
+		case(BYTECODE::JUMPLTE):
+			{
+				if((REG_FLAGS & FLAG::LTE) == FLAG::LTE){
+					uint16_t addr = getAddressArgument(1);
+					REG_PC = addr;
 				}
-
-			// JUMPLTE <addr> -> []
-			// Sets the PC to a particular address in memory if LTE flag is set
-			case(BYTECODE::JUMPLTE):
-				{
-					if((REG_FLAGS & FLAG::LTE) == FLAG::LTE){
-						uint16_t addr = getAddressArgument(1);
-						REG_PC = addr;
-					}
-					break;
-				}
-				
-			// JUMPGTE <addr> -> []
-			// Sets the PC to a particular address in memory if GTE flag is set
-			case(BYTECODE::JUMPGTE):
-				{
-					if((REG_FLAGS & FLAG::GTE) == FLAG::GTE){
-						uint16_t addr = getAddressArgument(1);
-						REG_PC = addr;
-					}
-					break;
-				}
-				
-			/* MOVING */
-
-			// MOVELR <literal> <regA> -> []
-			// Moves a literal into register A
-			case(BYTECODE::MOVELR):
-				{
-					uint16_t literal = getLiteralArgument(1);
-					bindReg(regARef, 3);
-					auto& regA = regARef.get();
-					regA = literal;
-
-					REG_PC += 4;
-
-					break;
-				}
+				break;
+			}
 			
-			// MOVERR <regA> <regB> -> []
-			// Moves the contents of register A into register B
-			case(BYTECODE::MOVERR):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
-					auto& regA = regARef.get();
-					auto& regB = regARef.get();
-
-					regB = regA;
-
-					REG_PC += 3;
-
-					break;
+		// JUMPGTE <addr> -> []
+		// Sets the PC to a particular address in memory if GTE flag is set
+		case(BYTECODE::JUMPGTE):
+			{
+				if((REG_FLAGS & FLAG::GTE) == FLAG::GTE){
+					uint16_t addr = getAddressArgument(1);
+					REG_PC = addr;
 				}
+				break;
+			}
 			
-			// MOVELR <literal> <addr> -> []
-			// Moves a literal into memory
-			case(BYTECODE::MOVELM):
-				{
-					uint16_t literal = getLiteralArgument(1);
-					uint16_t address = getAddressArgument(3);
-					writeUInt16(address, literal);
+		/* MOVING */
+
+		// MOVELR <literal> <regA> -> []
+		// Moves a literal into register A
+		case(BYTECODE::MOVELR):
+			{
+				uint16_t literal = getLiteralArgument(1);
+				bindReg(regARef, 3);
+				auto& regA = regARef.get();
+				regA = literal;
+
+				REG_PC += 4;
+
+				break;
+			}
+		
+		// MOVERR <regA> <regB> -> []
+		// Moves the contents of register A into register B
+		case(BYTECODE::MOVERR):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
+				auto& regA = regARef.get();
+				auto& regB = regARef.get();
+
+				regB = regA;
+
+				REG_PC += 3;
+
+				break;
+			}
+		
+		// MOVELR <literal> <addr> -> []
+		// Moves a literal into memory
+		case(BYTECODE::MOVELM):
+			{
+				uint16_t literal = getLiteralArgument(1);
+				uint16_t address = getAddressArgument(3);
+				writeUInt16(address, literal);
+
+				REG_PC += 4;
+
+				break;
+			}
 
-					REG_PC += 4;
+		// Moves the contents of register A into memory
+		// MOVERM <regA> <addr> -> []
+		case(BYTECODE::MOVERM):
+			{
+				bindReg(regARef, 1);
+				auto& regA = regARef.get();
 
-					break;
-				}
+				uint16_t address = getAddressArgument(2);
+
+				writeUInt16(address, regA);
 
-			// Moves the contents of register A into memory
-			// MOVERM <regA> <addr> -> []
-			case(BYTECODE::MOVERM):
-				{
-					bindReg(regARef, 1);
-					auto& regA = regARef.get();
+				REG_PC += 4;
+
+				break;
 
-					uint16_t address = getAddressArgument(2);
+			}
 
-					writeUInt16(address, regA);
+		// Moves the contents of memory into register A
+		// MOVEMR <addr> <regA> -> []
+		case(BYTECODE::MOVEMR):
+			{
+				uint16_t address = getAddressArgument(1);
 
-					REG_PC += 4;
+				bindReg(regARef, 3);
+				auto& regA = regARef.get();
 
-					break;
+				regA = readUInt16(address);
 
-				}
+				REG_PC += 4;
+				
+				break;
+			}
 
-			// Moves the contents of memory into register A
-			// MOVEMR <addr> <regA> -> []
-			case(BYTECODE::MOVEMR):
-				{
-					uint16_t address = getAddressArgument(1);
+		// Moves a literal into memory at the address inside register A
+		// MOVELIR <literal> <regA> -> []
+		case(BYTECODE::MOVELIR):
+			{
+				uint16_t literal = getLiteralArgument(1);
 
-					bindReg(regARef, 3);
-					auto& regA = regARef.get();
+				bindReg(regARef, 3);
+				auto& address = regARef.get();
 
-					regA = readUInt16(address);
+				writeUInt16(address, literal);
 
-					REG_PC += 4;
-					
-					break;
-				}
+				REG_PC += 4;
+				
+				break;
 
-			// Moves a literal into memory at the address inside register A
-			// MOVELIR <literal> <regA> -> []
-			case(BYTECODE::MOVELIR):
-				{
-					uint16_t literal = getLiteralArgument(1);
+			}
 
-					bindReg(regARef, 3);
-					auto& address = regARef.get();
+		// Moves the contents of memory at the address inside register A to register B
+		// MOVEIRR <regA> <regB> -> []
+		case(BYTECODE::MOVEIRR):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					writeUInt16(address, literal);
+				auto& address = regARef.get();
+				auto& regB = regBRef.get();	
 
-					REG_PC += 4;
-					
-					break;
+				uint16_t contents = readUInt16(address);
+				regB = contents;
 
-				}
+				REG_PC += 3;
+				
+				break;
+			}
 
-			// Moves the contents of memory at the address inside register A to register B
-			// MOVEIRR <regA> <regB> -> []
-			case(BYTECODE::MOVEIRR):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+		// Moves the contents of memory at the address inside register A to memory
+		// MOVEIRM <regA> <addr> -> []
+		case(BYTECODE::MOVEIRM):
+			{
+				bindReg(regARef, 1);
+				auto& address = regARef.get();
 
-					auto& address = regARef.get();
-					auto& regB = regBRef.get();	
+				uint16_t contents = readUInt16(address);
+				writeUInt16(address, contents);
 
-					uint16_t contents = readUInt16(address);
-					regB = contents;
-  
-					REG_PC += 3;
-					
-					break;
-				}
+				REG_PC += 4;
+				
+				break;
+			}
 
-			// Moves the contents of memory at the address inside register A to memory
-			// MOVEIRM <regA> <addr> -> []
-			case(BYTECODE::MOVEIRM):
-				{
-					bindReg(regARef, 1);
-					auto& address = regARef.get();
 
-					uint16_t contents = readUInt16(address);
-					writeUInt16(address, contents);
+		// Moves contents of memory at the address inside memory to register A
+		// MOVEIMR <addr> <regA> -> []
+		case(BYTECODE::MOVEIMR):
+			{
+				uint16_t address = getAddressArgument(1);
 
-					REG_PC += 4;
-					
-					break;
-				}
+				bindReg(regARef, 3);
+				auto& regA = regARef.get();
 
+				uint16_t contents = readUInt16(address);
 
-			// Moves contents of memory at the address inside memory to register A
-			// MOVEIMR <addr> <regA> -> []
-			case(BYTECODE::MOVEIMR):
-				{
-					uint16_t address = getAddressArgument(1);
+				regA = contents;
 
-					bindReg(regARef, 3);
-					auto& regA = regARef.get();
+				REG_PC += 4;
+				
+				break;
 
-					uint16_t contents = readUInt16(address);
+			}
 
-					regA = contents;
+		// RegisterA + RegisterB -> RegisterB
+		// ADD <regA> <regB> -> [regB]
+		case(BYTECODE::ADD):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 4;
-					
-					break;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-				}
+				regB = regA + regB;
 
-			// RegisterA + RegisterB -> RegisterB
-			// ADD <regA> <regB> -> [regB]
-			case(BYTECODE::ADD):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA + regB;
+		// RegisterA - RegisterB -> RegisterB
+		// SUBTRACT <regA> <regB> -> [regB]
+		case(BYTECODE::SUBTRACT):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA - regB;
 
-			// RegisterA - RegisterB -> RegisterB
-			// SUBTRACT <regA> <regB> -> [regB]
-			case(BYTECODE::SUBTRACT):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA - regB;
+		// RegisterA * RegisterB -> RegisterB
+		// MULTIPLY <regA> <regB> -> [regB]
+		case(BYTECODE::MULTIPLY):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA * regB;
 
-			// RegisterA * RegisterB -> RegisterB
-			// MULTIPLY <regA> <regB> -> [regB]
-			case(BYTECODE::MULTIPLY):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA * regB;
+		// RegisterA / RegisterB -> RegisterB
+		// DIVIDE <regA> <regB> -> [regB]
+		case(BYTECODE::DIVIDE):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA / regB;
 
-			// RegisterA / RegisterB -> RegisterB
-			// DIVIDE <regA> <regB> -> [regB]
-			case(BYTECODE::DIVIDE):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA / regB;
+		// RegisterA + 1 -> RegisterA
+		// INCREMENT <regA> -> [regA]
+		case(BYTECODE::INCREMENT):
+			{
+				bindReg(regARef, 1);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
 
-					break;
-				}
+				regA += 1;
 
-			// RegisterA + 1 -> RegisterA
-			// INCREMENT <regA> -> [regA]
-			case(BYTECODE::INCREMENT):
-				{
-					bindReg(regARef, 1);
+				REG_PC += 2;
 
-					auto& regA = regARef.get();
+				break;
+			}
 
-					regA += 1;
+		// RegisterA - 1 -> RegisterA
+		// DECREMENT <regA> -> [regA]
+		case(BYTECODE::DECREMENT):
+			{
+				bindReg(regARef, 1);
 
-					REG_PC += 2;
+				auto& regA = regARef.get();
 
-					break;
-				}
+				regA -= 1;
 
-			// RegisterA - 1 -> RegisterA
-			// DECREMENT <regA> -> [regA]
-			case(BYTECODE::DECREMENT):
-				{
-					bindReg(regARef, 1);
+				REG_PC += 2;
 
-					auto& regA = regARef.get();
+				break;
+			}
 
-					regA -= 1;
+		// RegisterA AND RegisterB -> RegisterB
+		// AND <regA> <regB> -> [regB]
+		case(BYTECODE::AND):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 2;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA & regB;
 
-			// RegisterA AND RegisterB -> RegisterB
-			// AND <regA> <regB> -> [regB]
-			case(BYTECODE::AND):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA & regB;
+		// RegisterA OR RegisterB -> RegisterB
+		// OR <regA> <regB> -> [regB]
+		case(BYTECODE::OR):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA | regB;
 
-			// RegisterA OR RegisterB -> RegisterB
-			// OR <regA> <regB> -> [regB]
-			case(BYTECODE::OR):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA | regB;
+		// RegisterA XOR RegisterB -> RegisterB
+		// XOR <regA> <regB> -> [regB]
+		case(BYTECODE::XOR):
+			{
+				bindReg(regARef, 1);
+				bindReg(regBRef, 2);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
+				auto& regB = regBRef.get();
 
-					break;
-				}
+				regB = regA ^ regB;
 
-			// RegisterA XOR RegisterB -> RegisterB
-			// XOR <regA> <regB> -> [regB]
-			case(BYTECODE::XOR):
-				{
-					bindReg(regARef, 1);
-					bindReg(regBRef, 2);
+				REG_PC += 3;
 
-					auto& regA = regARef.get();
-					auto& regB = regBRef.get();
+				break;
+			}
 
-					regB = regA ^ regB;
+		// RegisterA -> !RegisterA
+		// NOT <regA> -> [regA]
+		case(BYTECODE::NOT):
+			{
+				bindReg(regARef, 1);
 
-					REG_PC += 3;
+				auto& regA = regARef.get();
 
-					break;
-				}
+				regA = ~regA;
 
-			// RegisterA -> !RegisterA
-			// NOT <regA> -> [regA]
-			case(BYTECODE::NOT):
-				{
-					bindReg(regARef, 1);
+				REG_PC += 2;
 
-					auto& regA = regARef.get();
+				break;
+			}
 
-					regA = ~regA;
+		// RegisterA << literal -> RegisterA
+		// SHIFTLEFT <regA> <literal> -> [regA]
+		case(BYTECODE::SHIFTLEFT):
+			{
+				bindReg(regARef, 1);
 
-					REG_PC += 2;
+				uint16_t literal = getLiteralArgument(2);
 
-					break;
-				}
+				auto& regA = regARef.get();
 
-			// RegisterA << literal -> RegisterA
-			// SHIFTLEFT <regA> <literal> -> [regA]
-			case(BYTECODE::SHIFTLEFT):
-				{
-					bindReg(regARef, 1);
+				regA = regA << literal;
 
-					uint16_t literal = getLiteralArgument(2);
+				REG_PC += 4;
 
-					auto& regA = regARef.get();
+				break;
+			}
 
-					regA = regA << literal;
+		// RegisterA >> literal  -> RegisterA
+		// SHIFTRIGHT <regA> <literal> -> [regA]
+		case(BYTECODE::SHIFTRIGHT):
+			{
+				bindReg(regARef, 1);
 
-					REG_PC += 4;
+				uint16_t literal = getLiteralArgument(2);
 
-					break;
-				}
+				auto& regA = regARef.get();
 
-			// RegisterA >> literal  -> RegisterA
-			// SHIFTRIGHT <regA> <literal> -> [regA]
-			case(BYTECODE::SHIFTRIGHT):
-				{
-					bindReg(regARef, 1);
+				regA = regA >> literal;
 
-					uint16_t literal = getLiteralArgument(2);
+				REG_PC += 4;
 
-					auto& regA = regARef.get();
-
-					regA = regA >> literal;
-
-					REG_PC += 4;
-
-					break;
-				}
-
-
-		}	
-	}
+				break;
+			}
+	}	
 	
+	return RESULT_CODE::SUCCESS;
+}
+
+RESULT FVM::run(){
+	while(!((REG_FLAGS & FLAG::HLT) == FLAG::HLT)){
+		RESULT result = step();
+		if(result != RESULT_CODE::SUCCESS){
+			return result;
+		}
+	}
+
 	return RESULT_CODE::SUCCESS;
 }
