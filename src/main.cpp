@@ -13,6 +13,7 @@
 */
 
 #ifdef _WIN32 
+	#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 	#include <Windows.h>
 #endif
 
